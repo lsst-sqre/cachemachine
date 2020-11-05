@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cachemachine
+data:
+  # These configurations are injected as environment variables into the
+  # app container.
+  SAFIR_NAME: "cachemachine"
+  SAFIR_PROFILE: "production"
+  SAFIR_LOGGER: "cachemachine"
+  SAFIR_LOG_LEVEL: "INFO"

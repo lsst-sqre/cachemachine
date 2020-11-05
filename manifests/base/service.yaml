@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cachemachine
+  labels:
+    app: cachemachine
+spec:
+  ports:
+    - name: cachemachine-http
+      protocol: TCP
+      port: 8080
+      targetPort: app
+  selector:
+    name: cachemachine

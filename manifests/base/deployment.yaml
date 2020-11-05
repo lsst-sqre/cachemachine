@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cachemachine
+  labels:
+    app: cachemachine
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: cachemachine
+  template:
+    metadata:
+      labels:
+        name: cachemachine
+    spec:
+      containers:
+        - name: app
+          imagePullPolicy: "Always"
+          # Use images field in a Kustomization to regularly set/update image tag
+          image: "lsstsqre/cachemachine"
+          ports:
+            - containerPort: 8080
+              name: app
+          envFrom:
+            - configMapRef:
+                name: cachemachine

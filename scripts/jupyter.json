@@ -1,0 +1,11 @@
+{
+  "name": "jupyter",
+  "label": "beta.kubernetes.io/arch: amd64",
+  "repomen": [
+    {
+      "type": "SimpleRepoMan",
+      "name": "Weekly 35",
+      "image_url": "registry.hub.docker.com/lsstsqre/sciplat-lab:w_2020_35"
+    }
+  ]
+}

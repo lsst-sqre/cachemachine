@@ -28,7 +28,7 @@ class Configuration:
     Set with the ``SAFIR_LOGGER`` environment variable.
     """
 
-    log_level: str = os.getenv("SAFIR_LOG_LEVEL", "INFO")
+    log_level: str = os.getenv("SAFIR_LOG_LEVEL", "DEBUG")
     """The log level of the application's logger.
 
     Set with the ``SAFIR_LOG_LEVEL`` environment variable.

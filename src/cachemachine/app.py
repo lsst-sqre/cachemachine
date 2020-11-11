@@ -3,13 +3,17 @@
 __all__ = ["create_app"]
 
 from aiohttp import web
+from kubernetes import config
 from safir.http import init_http_session
 from safir.logging import configure_logging
 from safir.metadata import setup_metadata
 from safir.middleware import bind_logger
 
+from cachemachine.automatedtellermanager import AutomatedTellerManager
 from cachemachine.config import Configuration
 from cachemachine.handlers import init_external_routes, init_internal_routes
+
+config.load_incluster_config()
 
 
 def create_app() -> web.Application:
@@ -32,6 +36,11 @@ def create_app() -> web.Application:
     setup_middleware(sub_app)
     sub_app.add_routes(init_external_routes())
     root_app.add_subapp(f'/{root_app["safir/config"].name}', sub_app)
+
+    manager = AutomatedTellerManager()
+    root_app["automatedtellermanager"] = manager
+    root_app.on_startup.append(manager.init)
+    root_app.on_cleanup.append(manager.cleanup)
 
     return root_app
 

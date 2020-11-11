@@ -1,0 +1,11 @@
+host: "minikube.lsst.codes"
+
+image:
+  tag: dev
+  pullPolicy: Never
+
+ingress:
+  enabled: true
+  hosts:
+    - host: minikube.lsst.codes
+      paths: ["/cachemachine"]

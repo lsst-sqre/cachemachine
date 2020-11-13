@@ -19,18 +19,20 @@ class CacheChecker:
         label_exists = False
 
         for n in nodes:
+            node_name = n.metadata.name
+
             labels = []
 
             for k in n.metadata.labels:
                 labels.append(k + ": " + n.metadata.labels[k])
 
-            logger.info(labels)
+            logger.debug(f"{node_name} labels: {labels}")
 
             images = []
             for i in n.status.images:
                 images.extend(i.names)
 
-            logger.info(images)
+            logger.debug(f"{node_name} images: {images}")
 
             if self.label in labels:
                 if not label_exists:

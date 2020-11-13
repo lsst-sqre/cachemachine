@@ -13,7 +13,7 @@ class AutomatedTeller:
         self.name = name
         self.label = label
         self.checker = CacheChecker(self.label)
-        self.depositer = CacheDepositer()
+        self.depositer = CacheDepositer(self.name)
         self.repomen = repomen
         self.desired_cache = set()
         self.images_to_cache = []
@@ -35,7 +35,7 @@ class AutomatedTeller:
             else:
                 self.images_to_cache = []
 
-            if self.images_to_cache:
+            if self.images_to_cache and not self.depositer.busy():
                 self.depositer.deposit(self.images_to_cache[0])
 
             await asyncio.sleep(60)

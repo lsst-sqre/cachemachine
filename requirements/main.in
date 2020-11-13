@@ -10,6 +10,7 @@ aiohttp
 aiodns
 aiojobs
 cchardet
+docker_registry_client
 importlib_metadata
 click
 kubernetes

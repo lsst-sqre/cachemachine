@@ -6,6 +6,7 @@ from aiohttp import web
 
 from cachemachine.automatedteller import AutomatedTeller
 from cachemachine.handlers import routes
+from cachemachine.rubinrepoman import RubinRepoMan
 from cachemachine.simplerepoman import SimpleRepoMan
 
 
@@ -25,6 +26,10 @@ async def create_teller(request: web.Request) -> web.Response:
     for r in body["repomen"]:
         if r["type"] == "SimpleRepoMan":
             repomen.append(SimpleRepoMan(r))
+        elif r["type"] == "RubinRepoMan":
+            repomen.append(RubinRepoMan(r))
+        else:
+            return web.HTTPBadRequest()
 
     teller = AutomatedTeller(name, label, repomen)
     manager = request.config_dict["automatedtellermanager"]

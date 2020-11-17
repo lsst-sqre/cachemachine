@@ -1,14 +1,15 @@
 import structlog
 from docker_registry_client import DockerRegistryClient
 
+from cachemachine.dockercreds import DockerCreds
+
 logger = structlog.get_logger(__name__)
 
 
 class RubinRepoMan:
     def __init__(self, body):
         self.registry_url = body.get("registry_url", "hub.docker.com")
-        self.username = body["username"]
-        self.password = body["password"]
+        (self.username, self.password) = DockerCreds.lookup(self.registry_url)
         self.repo = body["repo"]
 
         self.num_dailies = body["num_dailies"]

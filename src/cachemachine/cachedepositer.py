@@ -4,11 +4,14 @@ from kubernetes.client import (
     V1Container,
     V1DaemonSet,
     V1DaemonSetSpec,
+    V1LocalObjectReference,
     V1ObjectMeta,
     V1PodSpec,
     V1PodTemplateSpec,
 )
 from kubernetes.client.exceptions import ApiException
+
+from cachemachine.config import Configuration
 
 logger = structlog.get_logger(__name__)
 
@@ -31,9 +34,18 @@ class CacheDepositer:
             command=["/bin/sh", "-c", "sleep 1200"],
         )
 
+        pull_secret_name = Configuration().docker_secret_name
+        if pull_secret_name:
+            pull_secret = [V1LocalObjectReference(name=pull_secret_name)]
+        else:
+            pull_secret = None
+
         template = V1PodTemplateSpec(
             metadata=V1ObjectMeta(labels={"app": self.name}),
-            spec=V1PodSpec(containers=[container]),
+            spec=V1PodSpec(
+                containers=[container],
+                image_pull_secrets=pull_secret,
+            ),
         )
 
         spec = V1DaemonSetSpec(

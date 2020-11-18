@@ -74,7 +74,7 @@ class CacheDepositer:
 
         image_url = ds_status.spec.template.spec.containers[0].image
         desired = ds_status.status.desired_number_scheduled
-        done = ds_status.status.updated_number_scheduled
+        done = ds_status.status.number_available
         logger.info(f"{image_url}: {desired} / {done}")
 
         if desired != done:

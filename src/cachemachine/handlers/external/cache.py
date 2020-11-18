@@ -49,6 +49,18 @@ async def ask_teller(request: web.Request) -> web.Response:
         raise web.HTTPNotFound()
 
 
+@routes.get("/{name}/available")
+async def available_images(request: web.Request) -> web.Response:
+    name = request.match_info["name"]
+    manager = request.config_dict["automatedtellermanager"]
+
+    try:
+        teller = manager.get_teller(name)
+        return web.json_response(teller.available_images)
+    except KeyError:
+        raise web.HTTPNotFound()
+
+
 @routes.delete("/{name}")
 async def stop_teller(request: web.Request) -> web.Response:
     name = request.match_info["name"]

@@ -15,28 +15,32 @@ class AutomatedTeller:
         self.checker = CacheChecker(self.label)
         self.depositer = CacheDepositer(self.name)
         self.repomen = repomen
-        self.desired_cache = set()
+        self.available_images = []
+        self.desired_images = []
         self.images_to_cache = []
 
     async def do_work(self):
         while True:
-            desired_cache = set()
-            for r in self.repomen:
-                desired_cache = desired_cache.union(r.desired_images())
-
-            self.desired_cache = desired_cache
+            self.available_images = []
+            self.desired_images = []
+            self.images_to_cache = []
 
             self.checker.check()
 
-            if self.checker.label_exists:
-                self.images_to_cache = list(
-                    self.desired_cache - self.checker.common_cache
-                )
+            if not self.checker.label_exists:
+                logger.warning(f"No nodes are labeled with: {self.label}")
             else:
-                self.images_to_cache = []
+                for r in self.repomen:
+                    for image in r.desired_images():
+                        self.desired_images.append(image)
+
+                        if image["image_url"] in self.checker.common_cache:
+                            self.available_images.append(image)
+                        else:
+                            self.images_to_cache.append(image)
 
             if self.images_to_cache and not self.depositer.busy():
-                self.depositer.deposit(self.images_to_cache[0])
+                self.depositer.deposit(self.images_to_cache[0]["image_url"])
 
             await asyncio.sleep(60)
 
@@ -46,6 +50,7 @@ class AutomatedTeller:
             "label": self.label,
             "label_exists": self.checker.label_exists,
             "common_cache": list(self.checker.common_cache),
-            "desired_cache": list(self.desired_cache),
+            "available_images": self.available_images,
+            "desired_images": self.desired_images,
             "images_to_cache": self.images_to_cache,
         }

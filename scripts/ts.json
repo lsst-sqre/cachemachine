@@ -6,7 +6,8 @@
   "repomen": [
     {
       "type": "RubinRepoMan",
-      "repo": "lsstsqre/sciplat-lab",
+      "registry_url": "ts-dockerhub.lsst.org",
+      "repo": "test/sciplat-lab",
       "num_releases": 1,
       "num_weeklies": 2,
       "num_dailies": 3

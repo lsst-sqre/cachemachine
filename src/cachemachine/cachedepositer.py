@@ -20,7 +20,7 @@ class CacheDepositer:
     def __init__(self, name):
         self.name = name
         self.api = AppsV1Api()
-        self.namespace = "cachemachine-dev"
+        self.namespace = self._get_namespace()
 
     def deposit(self, image_url):
         # Make a container that just sits for 1200 seconds.  The time is
@@ -93,3 +93,9 @@ class CacheDepositer:
         except ApiException:
             logger.exception("Exception deleting daemonset")
             raise
+
+    def _get_namespace(self) -> str:
+        ns_file = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
+
+        with open(ns_file) as f:
+            return f.read().strip()

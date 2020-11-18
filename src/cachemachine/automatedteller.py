@@ -9,11 +9,11 @@ logger = structlog.get_logger(__name__)
 
 
 class AutomatedTeller:
-    def __init__(self, name, label, repomen):
+    def __init__(self, name, labels, repomen):
         self.name = name
-        self.label = label
-        self.checker = CacheChecker(self.label)
-        self.depositer = CacheDepositer(self.name)
+        self.labels = labels
+        self.checker = CacheChecker(self.labels)
+        self.depositer = CacheDepositer(self.name, self.labels)
         self.repomen = repomen
         self.available_images = []
         self.desired_images = []
@@ -27,8 +27,8 @@ class AutomatedTeller:
 
             self.checker.check()
 
-            if not self.checker.label_exists:
-                logger.warning(f"No nodes are labeled with: {self.label}")
+            if not self.checker.nodes_exist:
+                logger.warning(f"No nodes are labeled with: {self.labels}")
             else:
                 for r in self.repomen:
                     for image in r.desired_images():
@@ -47,8 +47,8 @@ class AutomatedTeller:
     def talk(self):
         return {
             "name": self.name,
-            "label": self.label,
-            "label_exists": self.checker.label_exists,
+            "labels": self.labels,
+            "nodes_exist": self.checker.nodes_exist,
             "common_cache": list(self.checker.common_cache),
             "available_images": self.available_images,
             "desired_images": self.desired_images,

@@ -20,7 +20,7 @@ async def get_tellers(request: web.Request) -> web.Response:
 async def create_teller(request: web.Request) -> web.Response:
     body = await request.json()
     name = body["name"]
-    label = body["label"]
+    labels = body["labels"]
     repomen = []
 
     for r in body["repomen"]:
@@ -31,7 +31,7 @@ async def create_teller(request: web.Request) -> web.Response:
         else:
             return web.HTTPBadRequest()
 
-    teller = AutomatedTeller(name, label, repomen)
+    teller = AutomatedTeller(name, labels, repomen)
     manager = request.config_dict["automatedtellermanager"]
     await manager.manage_teller(teller)
     return web.json_response(teller.talk())

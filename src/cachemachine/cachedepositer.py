@@ -17,8 +17,9 @@ logger = structlog.get_logger(__name__)
 
 
 class CacheDepositer:
-    def __init__(self, name):
+    def __init__(self, name, labels):
         self.name = name
+        self.labels = labels
         self.api = AppsV1Api()
         self.namespace = self._get_namespace()
 
@@ -45,6 +46,7 @@ class CacheDepositer:
             spec=V1PodSpec(
                 containers=[container],
                 image_pull_secrets=pull_secret,
+                node_selector=self.labels,
             ),
         )
 

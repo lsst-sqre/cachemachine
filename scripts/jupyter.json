@@ -7,6 +7,7 @@
     {
       "type": "RubinRepoMan",
       "repo": "lsstsqre/sciplat-lab",
+      "recommended_image_url": "lsstsqre/sciplat-lab:recommended",
       "num_releases": 1,
       "num_weeklies": 2,
       "num_dailies": 3

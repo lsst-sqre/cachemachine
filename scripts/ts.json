@@ -8,6 +8,7 @@
       "type": "RubinRepoMan",
       "registry_url": "ts-dockerhub.lsst.org",
       "repo": "test/sciplat-lab",
+      "recommended_image_url": "ts-dockerhub.lsst.org/test/sciplat-lab:recommended",
       "num_releases": 1,
       "num_weeklies": 2,
       "num_dailies": 3

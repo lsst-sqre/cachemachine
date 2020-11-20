@@ -12,12 +12,18 @@ class AutomatedTeller:
     def __init__(self, name, labels, repomen):
         self.name = name
         self.labels = labels
-        self.checker = CacheChecker(self.labels)
-        self.depositer = CacheDepositer(self.name, self.labels)
         self.repomen = repomen
         self.available_images = []
         self.desired_images = []
         self.images_to_cache = []
+
+        self.recommended_image_urls = []
+        for r in self.repomen:
+            if r.recommended_image_url:
+                self.recommended_image_urls.append(r.recommended_image_url)
+
+        self.checker = CacheChecker(self.labels, self.recommended_image_urls)
+        self.depositer = CacheDepositer(self.name, self.labels)
 
     async def do_work(self):
         while True:
@@ -31,7 +37,10 @@ class AutomatedTeller:
                 logger.warning(f"No nodes are labeled with: {self.labels}")
             else:
                 for r in self.repomen:
-                    for image in r.desired_images():
+                    recommended_names = self.checker.recommended_names[
+                        r.recommended_image_url
+                    ]
+                    for image in r.desired_images(recommended_names):
                         self.desired_images.append(image)
 
                         if image["image_url"] in self.checker.common_cache:

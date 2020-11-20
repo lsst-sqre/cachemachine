@@ -1,5 +1,6 @@
 import base64
 import json
+from typing import Optional, Tuple
 
 import structlog
 
@@ -8,7 +9,7 @@ logger = structlog.get_logger(__name__)
 
 class DockerCreds:
     @staticmethod
-    def lookup(registry_url):
+    def lookup(registry_url: str) -> Tuple[Optional[str], Optional[str]]:
         try:
             with open("/etc/secrets/.dockerconfigjson") as f:
                 credstore = json.loads(f.read())

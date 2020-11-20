@@ -1,3 +1,5 @@
+from typing import Any, Dict, List, Set
+
 import structlog
 from docker_registry_client import DockerRegistryClient
 
@@ -7,7 +9,14 @@ logger = structlog.get_logger(__name__)
 
 
 class RubinRepoMan:
-    def __init__(self, body):
+    registry_url: str
+    recommended_image_url: str
+    recommended_tag: str
+    num_dailies: int
+    num_weeklies: int
+    num_releases: int
+
+    def __init__(self, body: Dict[str, Any]):
         self.registry_url = body.get("registry_url", "hub.docker.com")
         (self.username, self.password) = DockerCreds.lookup(self.registry_url)
         self.repo = body["repo"]
@@ -18,7 +27,9 @@ class RubinRepoMan:
         self.num_weeklies = body["num_weeklies"]
         self.num_releases = body["num_releases"]
 
-    def desired_images(self, recommended_names):
+    def desired_images(
+        self, recommended_names: Set[str]
+    ) -> List[Dict[str, str]]:
         client = DockerRegistryClient(
             "https://" + self.registry_url,
             username=self.username,
@@ -78,8 +89,10 @@ class RubinRepoMan:
         logger.info(f"Returning {images}")
         return images
 
-    def _prune(self, image_metas, num_desired):
-        def take_tag(element):
+    def _prune(
+        self, image_metas: List[Dict[str, str]], num_desired: int
+    ) -> List[Dict[str, str]]:
+        def take_tag(element: Dict[str, str]) -> str:
             return element["tag"]
 
         image_metas = sorted(image_metas, key=take_tag, reverse=True)

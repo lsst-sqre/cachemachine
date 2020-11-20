@@ -1,21 +1,30 @@
 import asyncio
+from typing import Any, Dict, List, Sequence, Union
 
 import structlog
 
 from cachemachine.cachechecker import CacheChecker
 from cachemachine.cachedepositer import CacheDepositer
+from cachemachine.rubinrepoman import RubinRepoMan
+from cachemachine.simplerepoman import SimpleRepoMan
 
 logger = structlog.get_logger(__name__)
 
 
 class AutomatedTeller:
-    def __init__(self, name, labels, repomen):
+    available_images: List[Dict[str, str]] = []
+    desired_images: List[Dict[str, str]] = []
+    images_to_cache: List[Dict[str, str]] = []
+
+    def __init__(
+        self,
+        name: str,
+        labels: Dict[str, str],
+        repomen: Sequence[Union[SimpleRepoMan, RubinRepoMan]],
+    ):
         self.name = name
         self.labels = labels
         self.repomen = repomen
-        self.available_images = []
-        self.desired_images = []
-        self.images_to_cache = []
 
         self.recommended_image_urls = []
         for r in self.repomen:
@@ -25,7 +34,8 @@ class AutomatedTeller:
         self.checker = CacheChecker(self.labels, self.recommended_image_urls)
         self.depositer = CacheDepositer(self.name, self.labels)
 
-    async def do_work(self):
+    # Note, doesn't actually return, intended to run forever.
+    async def do_work(self) -> None:
         while True:
             self.available_images = []
             self.desired_images = []
@@ -53,7 +63,7 @@ class AutomatedTeller:
 
             await asyncio.sleep(60)
 
-    def talk(self):
+    def talk(self) -> Dict[str, Any]:
         return {
             "name": self.name,
             "labels": self.labels,

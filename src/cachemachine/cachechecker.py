@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Dict, List, Set
 
 import structlog
 from kubernetes.client.api import core_v1_api
@@ -7,18 +8,26 @@ logger = structlog.get_logger(__name__)
 
 
 class CacheChecker:
-    def __init__(self, labels, recommended_image_urls):
+    common_cache: Set[str]
+    labels: Dict[str, str]
+    nodes_exist: bool
+    recommended_names: Dict[str, Set[str]]
+    recommended_image_urls: List[str]
+
+    def __init__(
+        self, labels: Dict[str, str], recommended_image_urls: List[str]
+    ):
         self.api = core_v1_api.CoreV1Api()
         self.labels = labels
         self.recommended_image_urls = recommended_image_urls
         self._reset()
 
-    def _reset(self):
+    def _reset(self) -> None:
         self.common_cache = set()
         self.nodes_exist = False
-        self.recommended_names = set()
+        self.recommended_names = defaultdict(set)
 
-    def check(self):
+    def check(self) -> None:
         self._reset()
 
         nodes = self.api.list_node().items
@@ -31,7 +40,7 @@ class CacheChecker:
             # each item containing a particular image, and containing
             # a list of all the names it is known by.
             images = []
-            recommended_names = defaultdict(set)
+            recommended_names: Dict[str, Set[str]] = defaultdict(set)
             for i in n.status.images:
                 for url in self.recommended_image_urls:
                     if url in i.names:

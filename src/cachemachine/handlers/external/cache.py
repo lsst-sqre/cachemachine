@@ -2,6 +2,8 @@
 
 __all__ = ["get_tellers", "create_teller", "ask_teller", "stop_teller"]
 
+from typing import List, Union
+
 from aiohttp import web
 
 from cachemachine.automatedteller import AutomatedTeller
@@ -21,7 +23,7 @@ async def create_teller(request: web.Request) -> web.Response:
     body = await request.json()
     name = body["name"]
     labels = body["labels"]
-    repomen = []
+    repomen: List[Union[SimpleRepoMan, RubinRepoMan]] = []
 
     for r in body["repomen"]:
         if r["type"] == "SimpleRepoMan":

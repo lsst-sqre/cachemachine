@@ -34,7 +34,7 @@ class Configuration:
     Set with the ``SAFIR_LOG_LEVEL`` environment variable.
     """
 
-    docker_secret_name: str = os.getenv("DOCKER_SECRET_NAME", None)
+    docker_secret_name: str = os.getenv("DOCKER_SECRET_NAME", "")
     """Name of the kubernetes secret to use to pull images.
 
     Set by the ``DOCKER_SECRET_NAME`` environment variable,

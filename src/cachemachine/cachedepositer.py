@@ -1,3 +1,5 @@
+from typing import Dict
+
 import structlog
 from kubernetes.client import (
     AppsV1Api,
@@ -17,13 +19,13 @@ logger = structlog.get_logger(__name__)
 
 
 class CacheDepositer:
-    def __init__(self, name, labels):
+    def __init__(self, name: str, labels: Dict[str, str]):
         self.name = name
         self.labels = labels
         self.api = AppsV1Api()
         self.namespace = self._get_namespace()
 
-    def deposit(self, image_url):
+    def deposit(self, image_url: str) -> None:
         # Make a container that just sits for 1200 seconds.  The time is
         # arbitrary, but long enough for us to clean it up before it
         # restarts.  Sadly with a DaemonSet, you can't set the restart
@@ -39,7 +41,7 @@ class CacheDepositer:
         if pull_secret_name:
             pull_secret = [V1LocalObjectReference(name=pull_secret_name)]
         else:
-            pull_secret = None
+            pull_secret = []
 
         template = V1PodTemplateSpec(
             metadata=V1ObjectMeta(labels={"app": self.name}),

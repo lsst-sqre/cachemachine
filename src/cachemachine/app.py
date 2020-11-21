@@ -2,6 +2,7 @@
 
 __all__ = ["create_app"]
 
+import structlog
 from aiohttp import web
 from kubernetes import config
 from safir.http import init_http_session
@@ -13,7 +14,12 @@ from cachemachine.automatedtellermanager import AutomatedTellerManager
 from cachemachine.config import Configuration
 from cachemachine.handlers import init_external_routes, init_internal_routes
 
-config.load_incluster_config()
+logger = structlog.get_logger(__name__)
+
+try:
+    config.load_incluster_config()
+except config.config_exception.ConfigException:
+    logger.exception("Trouble loading kubernetes config, continuing...")
 
 
 def create_app() -> web.Application:

@@ -85,13 +85,9 @@ class RubinRepoMan:
     def _prune(
         self, image_metas: List[Dict[str, str]], num_desired: int
     ) -> List[Dict[str, str]]:
-        def take_tag(element: Dict[str, str]) -> str:
-            return element["tag"]
-
-        image_metas = sorted(image_metas, key=take_tag, reverse=True)
+        image_metas = sorted(image_metas, key=lambda i: i["tag"], reverse=True)
 
         if len(image_metas) < num_desired:
-            logger.warning(f"{image_metas} too short to choose {num_desired}")
             return image_metas
         else:
             return image_metas[0:num_desired]

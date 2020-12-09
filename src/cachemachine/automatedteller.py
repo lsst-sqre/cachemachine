@@ -26,10 +26,11 @@ class AutomatedTeller:
         self.labels = labels
         self.repomen = repomen
 
-        self.recommended_image_urls = []
-        for r in self.repomen:
-            if r.recommended_image_url:
-                self.recommended_image_urls.append(r.recommended_image_url)
+        self.recommended_image_urls = [
+            r.recommended_image_url
+            for r in self.repomen
+            if r.recommended_image_url is not None
+        ]
 
         self.checker = CacheChecker(self.labels, self.recommended_image_urls)
         self.depositer = CacheDepositer(self.name, self.labels)

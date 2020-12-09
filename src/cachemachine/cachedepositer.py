@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Dict
 
 import structlog
@@ -100,6 +101,4 @@ class CacheDepositer:
 
     def _get_namespace(self) -> str:
         ns_file = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
-
-        with open(ns_file) as f:
-            return f.read().strip()
+        return Path(ns_file).read_text().strip()

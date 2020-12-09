@@ -9,13 +9,6 @@ logger = structlog.get_logger(__name__)
 
 
 class RubinRepoMan:
-    registry_url: str
-    recommended_image_url: str
-    recommended_tag: str
-    num_dailies: int
-    num_weeklies: int
-    num_releases: int
-
     def __init__(self, body: Dict[str, Any]):
         self.registry_url = body.get("registry_url", "hub.docker.com")
         (self.username, self.password) = DockerCreds.lookup(self.registry_url)
@@ -23,9 +16,9 @@ class RubinRepoMan:
 
         self.recommended_image_url = body.get("recommended_image_url", " : ")
         self.recommended_tag = self.recommended_image_url.split(":")[1]
-        self.num_dailies = body["num_dailies"]
-        self.num_weeklies = body["num_weeklies"]
-        self.num_releases = body["num_releases"]
+        self.num_dailies: int = body["num_dailies"]
+        self.num_weeklies: int = body["num_weeklies"]
+        self.num_releases: int = body["num_releases"]
 
     def desired_images(
         self, recommended_names: Set[str]

@@ -4,24 +4,20 @@ __all__ = [
     "AutomatedTellerManager",
 ]
 
-from dataclasses import dataclass, field
 from typing import Dict, List
 
 from aiohttp import web
-from aiojobs import Scheduler, create_scheduler
+from aiojobs import create_scheduler
 from aiojobs._job import Job
 
 from cachemachine.automatedteller import AutomatedTeller
 
 
-@dataclass
 class AutomatedTellerManager:
-    _tellers: Dict[str, AutomatedTeller] = field(default_factory=dict)
-    _jobs: Dict[str, Job] = field(default_factory=dict)
-    _scheduler: Scheduler = None
-
     async def init(self, app: web.Application) -> None:
         self._scheduler = await create_scheduler()
+        self._jobs: Dict[str, Job] = {}
+        self._tellers: Dict[str, AutomatedTeller] = {}
 
     async def cleanup(self, app: web.Application) -> None:
         await self._scheduler.close()

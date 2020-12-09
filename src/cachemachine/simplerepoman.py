@@ -6,9 +6,8 @@ logger = structlog.get_logger(__name__)
 
 
 class SimpleRepoMan:
-    recommended_image_url: str = ""
-
     def __init__(self, body: Dict[str, Any]):
+        self.recommended_image_url = ""
         self.images = body["images"]
 
     def desired_images(

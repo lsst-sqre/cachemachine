@@ -8,12 +8,6 @@ logger = structlog.get_logger(__name__)
 
 
 class CacheChecker:
-    common_cache: Set[str]
-    labels: Dict[str, str]
-    nodes_exist: bool
-    recommended_names: Dict[str, Set[str]]
-    recommended_image_urls: List[str]
-
     def __init__(
         self, labels: Dict[str, str], recommended_image_urls: List[str]
     ):
@@ -23,9 +17,9 @@ class CacheChecker:
         self._reset()
 
     def _reset(self) -> None:
-        self.common_cache = set()
+        self.common_cache: Set[str] = set()
         self.nodes_exist = False
-        self.recommended_names = defaultdict(set)
+        self.recommended_names: Dict[str, Set[str]] = defaultdict(set)
 
     def check(self) -> None:
         self._reset()

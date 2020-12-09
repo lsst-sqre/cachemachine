@@ -12,16 +12,16 @@ logger = structlog.get_logger(__name__)
 
 
 class AutomatedTeller:
-    available_images: List[Dict[str, str]] = []
-    desired_images: List[Dict[str, str]] = []
-    images_to_cache: List[Dict[str, str]] = []
-
     def __init__(
         self,
         name: str,
         labels: Dict[str, str],
         repomen: Sequence[Union[SimpleRepoMan, RubinRepoMan]],
     ):
+        self.available_images: List[Dict[str, str]]
+        self.desired_images: List[Dict[str, str]]
+        self.images_to_cache: List[Dict[str, str]]
+
         self.name = name
         self.labels = labels
         self.repomen = repomen

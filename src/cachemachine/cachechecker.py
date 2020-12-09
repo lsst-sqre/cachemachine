@@ -60,5 +60,5 @@ class CacheChecker:
                     # nodes so far.
                     self.common_cache &= set(images)
 
-                    for url in self.recommended_image_urls:
-                        self.recommended_names[url] &= recommended_names[url]
+                    for u in self.recommended_image_urls:
+                        self.recommended_names[u] &= recommended_names[u]

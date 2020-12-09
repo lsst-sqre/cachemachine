@@ -1,24 +1,33 @@
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Optional, Set
 
 import structlog
 from docker_registry_client import DockerRegistryClient
 
 from cachemachine.dockercreds import DockerCreds
+from cachemachine.types import RepoMan
 
 logger = structlog.get_logger(__name__)
 
 
-class RubinRepoMan:
+class RubinRepoMan(RepoMan):
     def __init__(self, body: Dict[str, Any]):
         self.registry_url = body.get("registry_url", "hub.docker.com")
         (self.username, self.password) = DockerCreds.lookup(self.registry_url)
         self.repo = body["repo"]
 
-        self.recommended_image_url = body.get("recommended_image_url", " : ")
-        self.recommended_tag = self.recommended_image_url.split(":")[1]
+        self._recommended_image_url = body.get("recommended_image_url", None)
+
+        if self._recommended_image_url:
+            self.recommended_tag = self._recommended_image_url.split(":")[1]
+        else:
+            self.recommended_tag = None
+
         self.num_dailies: int = body["num_dailies"]
         self.num_weeklies: int = body["num_weeklies"]
         self.num_releases: int = body["num_releases"]
+
+    def recommended_image_url(self) -> Optional[str]:
+        return self._recommended_image_url
 
     def desired_images(
         self, recommended_names: Set[str]
@@ -55,7 +64,7 @@ class RubinRepoMan:
                 # generate the name.
                 aka = []
                 for n in recommended_names:
-                    if (n == self.recommended_image_url) or ("@sha256" in n):
+                    if (n == self._recommended_image_url) or ("@sha256" in n):
                         continue
 
                     # Append the tag of this image to the aka list

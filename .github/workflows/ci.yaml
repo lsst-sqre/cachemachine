@@ -12,7 +12,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2.1.4
         with:
-          python-version: 3.7
+          python-version: 3.9.1
 
       - name: Install tox
         run: pip install tox

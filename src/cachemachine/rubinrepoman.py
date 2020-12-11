@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Set
 import structlog
 from docker_registry_client import DockerRegistryClient
 
-from cachemachine.dockercreds import DockerCreds
+from cachemachine.dockercreds import lookup_docker_credentials
 from cachemachine.types import RepoMan
 
 logger = structlog.get_logger(__name__)
@@ -12,7 +12,7 @@ logger = structlog.get_logger(__name__)
 class RubinRepoMan(RepoMan):
     def __init__(self, body: Dict[str, Any]):
         self.registry_url = body.get("registry_url", "hub.docker.com")
-        (self.username, self.password) = DockerCreds.lookup(self.registry_url)
+        self.credentials = lookup_docker_credentials(self.registry_url)
         self.repo = body["repo"]
 
         self._recommended_image_url = body.get("recommended_image_url", None)
@@ -34,8 +34,8 @@ class RubinRepoMan(RepoMan):
     ) -> List[Dict[str, str]]:
         client = DockerRegistryClient(
             "https://" + self.registry_url,
-            username=self.username,
-            password=self.password,
+            username=self.credentials.username,
+            password=self.credentials.password,
         )
 
         repo = client.repository(self.repo)

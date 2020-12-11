@@ -2,6 +2,10 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Set
 
 
+class TellerNotFoundError(Exception):
+    pass
+
+
 class RepoMan(ABC):
     @abstractmethod
     def desired_images(

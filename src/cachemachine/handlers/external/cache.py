@@ -10,6 +10,7 @@ from cachemachine.automatedteller import AutomatedTeller
 from cachemachine.handlers import routes
 from cachemachine.rubinrepoman import RubinRepoMan
 from cachemachine.simplerepoman import SimpleRepoMan
+from cachemachine.types import TellerNotFoundError
 
 
 @routes.get("/")
@@ -47,7 +48,7 @@ async def ask_teller(request: web.Request) -> web.Response:
     try:
         teller = manager.get_teller(name)
         return web.json_response(teller.talk())
-    except KeyError:
+    except TellerNotFoundError:
         raise web.HTTPNotFound()
 
 
@@ -59,7 +60,7 @@ async def available_images(request: web.Request) -> web.Response:
     try:
         teller = manager.get_teller(name)
         return web.json_response(teller.available_images)
-    except KeyError:
+    except TellerNotFoundError:
         raise web.HTTPNotFound()
 
 

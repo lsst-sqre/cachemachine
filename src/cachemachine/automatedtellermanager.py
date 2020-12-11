@@ -11,6 +11,7 @@ from aiojobs import create_scheduler
 from aiojobs._job import Job
 
 from cachemachine.automatedteller import AutomatedTeller
+from cachemachine.types import TellerNotFoundError
 
 
 class AutomatedTellerManager:
@@ -23,7 +24,10 @@ class AutomatedTellerManager:
         await self._scheduler.close()
 
     def get_teller(self, name: str) -> AutomatedTeller:
-        return self._tellers[name]
+        try:
+            return self._tellers[name]
+        except KeyError:
+            raise TellerNotFoundError()
 
     def list_tellers(self) -> List[str]:
         return list(self._tellers.keys())

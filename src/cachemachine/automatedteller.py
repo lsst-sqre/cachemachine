@@ -17,9 +17,9 @@ class AutomatedTeller:
         labels: Dict[str, str],
         repomen: Sequence[RepoMan],
     ):
-        self.available_images: List[Dict[str, str]]
-        self.desired_images: List[Dict[str, str]]
-        self.images_to_cache: List[Dict[str, str]]
+        self.available_images: List[Dict[str, str]] = []
+        self.desired_images: List[Dict[str, str]] = []
+        self.images_to_cache: List[Dict[str, str]] = []
 
         self.name = name
         self.labels = labels
@@ -41,9 +41,9 @@ class AutomatedTeller:
     # Note, doesn't actually return, intended to run forever.
     async def do_work(self) -> None:
         while True:
-            self.available_images = []
-            self.desired_images = []
-            self.images_to_cache = []
+            available_images: List[Dict[str, str]] = []
+            desired_images: List[Dict[str, str]] = []
+            images_to_cache: List[Dict[str, str]] = []
 
             self.checker.check()
 
@@ -60,15 +60,19 @@ class AutomatedTeller:
                         recommended_names = set()
 
                     for image in r.desired_images(recommended_names):
-                        self.desired_images.append(image)
+                        desired_images.append(image)
 
                         if image["image_url"] in self.checker.common_cache:
-                            self.available_images.append(image)
+                            available_images.append(image)
                         else:
-                            self.images_to_cache.append(image)
+                            images_to_cache.append(image)
 
-            if self.images_to_cache and not self.depositer.busy():
-                self.depositer.deposit(self.images_to_cache[0]["image_url"])
+            if images_to_cache and not self.depositer.busy():
+                self.depositer.deposit(images_to_cache[0]["image_url"])
+
+            self.available_images = available_images
+            self.desired_images = desired_images
+            self.images_to_cache = images_to_cache
 
             await asyncio.sleep(60)
 

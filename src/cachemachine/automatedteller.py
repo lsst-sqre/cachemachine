@@ -1,11 +1,11 @@
 import asyncio
-from typing import Any, Dict, List, Sequence
+from typing import Any, Dict, Sequence
 
 import structlog
 
 from cachemachine.cachechecker import CacheChecker
 from cachemachine.cachedepositer import CacheDepositer
-from cachemachine.types import RepoMan
+from cachemachine.types import DockerImageList, RepoMan
 
 logger = structlog.get_logger(__name__)
 
@@ -17,9 +17,9 @@ class AutomatedTeller:
         labels: Dict[str, str],
         repomen: Sequence[RepoMan],
     ):
-        self.available_images: List[Dict[str, str]] = []
-        self.desired_images: List[Dict[str, str]] = []
-        self.images_to_cache: List[Dict[str, str]] = []
+        self.available_images = DockerImageList()
+        self.desired_images = DockerImageList()
+        self.images_to_cache = DockerImageList()
 
         self.name = name
         self.labels = labels
@@ -41,9 +41,9 @@ class AutomatedTeller:
     # Note, doesn't actually return, intended to run forever.
     async def do_work(self) -> None:
         while True:
-            available_images: List[Dict[str, str]] = []
-            desired_images: List[Dict[str, str]] = []
-            images_to_cache: List[Dict[str, str]] = []
+            available_images = DockerImageList()
+            desired_images = DockerImageList()
+            images_to_cache = DockerImageList()
 
             self.checker.check()
 
@@ -62,13 +62,13 @@ class AutomatedTeller:
                     for image in r.desired_images(recommended_names):
                         desired_images.append(image)
 
-                        if image["image_url"] in self.checker.common_cache:
+                        if image.image_url in self.checker.common_cache:
                             available_images.append(image)
                         else:
                             images_to_cache.append(image)
 
             if images_to_cache and not self.depositer.busy():
-                self.depositer.deposit(images_to_cache[0]["image_url"])
+                self.depositer.deposit(images_to_cache[0].image_url)
 
             self.available_images = available_images
             self.desired_images = desired_images
@@ -82,7 +82,7 @@ class AutomatedTeller:
             "labels": self.labels,
             "nodes_exist": self.checker.nodes_exist,
             "common_cache": list(self.checker.common_cache),
-            "available_images": self.available_images,
-            "desired_images": self.desired_images,
-            "images_to_cache": self.images_to_cache,
+            "available_images": self.available_images.dump(),
+            "desired_images": self.desired_images.dump(),
+            "images_to_cache": self.images_to_cache.dump(),
         }

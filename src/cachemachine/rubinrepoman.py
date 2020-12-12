@@ -1,10 +1,10 @@
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, Optional, Set
 
 import structlog
 from docker_registry_client import DockerRegistryClient
 
 from cachemachine.dockercreds import lookup_docker_credentials
-from cachemachine.types import RepoMan
+from cachemachine.types import DockerImage, DockerImageList, RepoMan
 
 logger = structlog.get_logger(__name__)
 
@@ -29,9 +29,7 @@ class RubinRepoMan(RepoMan):
     def recommended_image_url(self) -> Optional[str]:
         return self._recommended_image_url
 
-    def desired_images(
-        self, recommended_names: Set[str]
-    ) -> List[Dict[str, str]]:
+    def desired_images(self, recommended_names: Set[str]) -> DockerImageList:
         client = DockerRegistryClient(
             "https://" + self.registry_url,
             username=self.credentials.username,
@@ -39,21 +37,23 @@ class RubinRepoMan(RepoMan):
         )
 
         repo = client.repository(self.repo)
-        tags = repo.tags()
+
+        # Sort the tags lexically and in reverse, which should give the
+        # most recent builds above the older builds.  At this point, all
+        # the dailies, weeklies, releases, and recommended are in here.
+        tags = sorted(repo.tags(), reverse=True)
         logger.debug(f"Registry returned tags: {tags}")
 
-        dailies = []
-        weeklies = []
-        releases = []
+        images = DockerImageList()
+        dailies = DockerImageList()
+        weeklies = DockerImageList()
+        releases = DockerImageList()
 
-        images = []
         for t in tags:
             if self.registry_url == "hub.docker.com":
                 image_url = f"{self.repo}:{t}"
             else:
                 image_url = f"{self.registry_url}/{self.repo}:{t}"
-
-            image_meta = {"tag": t, "image_url": image_url}
 
             tag_parts = t.split("_")
 
@@ -70,33 +70,37 @@ class RubinRepoMan(RepoMan):
                     # Append the tag of this image to the aka list
                     aka.append(n.split(":")[1])
 
-                image_meta["name"] = f"Recommended {aka}"
-                images.append(image_meta)
+                images.append(
+                    DockerImage(image_url=image_url, name=f"Recommended {aka}")
+                )
+
             elif t.startswith("d_"):
-                # Ex: d_2020_11_02
-                image_meta["name"] = f"Daily {tag_parts[2]}/{tag_parts[3]}"
-                dailies.append(image_meta)
+                # Ex: d_2020_11_0
+                if len(dailies) < self.num_dailies:
+                    dailies.append(
+                        DockerImage(
+                            image_url=image_url,
+                            name=f"Daily {tag_parts[2]}/{tag_parts[3]}",
+                        )
+                    )
             elif t.startswith("w_"):
                 # Ex: w_2020_41
-                image_meta["name"] = f"Weekly {tag_parts[2]}"
-                weeklies.append(image_meta)
+                if len(weeklies) < self.num_weeklies:
+                    weeklies.append(
+                        DockerImage(
+                            image_url=image_url, name=f"Weekly {tag_parts[2]}"
+                        )
+                    )
             elif t.startswith("r"):
                 # Ex: r20_0_0, r20_0_0_rc1
-                image_meta["name"] = "Release " + ".".join(tag_parts)
-                releases.append(image_meta)
+                if len(releases) < self.num_releases:
+                    name = "Release " + ".".join(tag_parts)
+                    releases.append(
+                        DockerImage(image_url=image_url, name=name)
+                    )
 
-        images.extend(self._prune(releases, self.num_releases))
-        images.extend(self._prune(weeklies, self.num_weeklies))
-        images.extend(self._prune(dailies, self.num_dailies))
+        images.extend(releases)
+        images.extend(weeklies)
+        images.extend(dailies)
         logger.info(f"Returning {images}")
         return images
-
-    def _prune(
-        self, image_metas: List[Dict[str, str]], num_desired: int
-    ) -> List[Dict[str, str]]:
-        image_metas = sorted(image_metas, key=lambda i: i["tag"], reverse=True)
-
-        if len(image_metas) < num_desired:
-            return image_metas
-        else:
-            return image_metas[0:num_desired]

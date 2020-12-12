@@ -2,7 +2,7 @@
 
 __all__ = ["get_tellers", "create_teller", "ask_teller", "stop_teller"]
 
-from typing import List, Union
+from typing import List
 
 from aiohttp import web
 
@@ -10,7 +10,7 @@ from cachemachine.automatedteller import AutomatedTeller
 from cachemachine.handlers import routes
 from cachemachine.rubinrepoman import RubinRepoMan
 from cachemachine.simplerepoman import SimpleRepoMan
-from cachemachine.types import TellerNotFoundError
+from cachemachine.types import RepoMan, TellerNotFoundError
 
 
 @routes.get("/")
@@ -24,7 +24,7 @@ async def create_teller(request: web.Request) -> web.Response:
     body = await request.json()
     name = body["name"]
     labels = body["labels"]
-    repomen: List[Union[SimpleRepoMan, RubinRepoMan]] = []
+    repomen: List[RepoMan] = []
 
     for r in body["repomen"]:
         if r["type"] == "SimpleRepoMan":
@@ -59,7 +59,7 @@ async def available_images(request: web.Request) -> web.Response:
 
     try:
         teller = manager.get_teller(name)
-        return web.json_response(teller.available_images)
+        return web.json_response(teller.available_images.dump())
     except TellerNotFoundError:
         raise web.HTTPNotFound()
 

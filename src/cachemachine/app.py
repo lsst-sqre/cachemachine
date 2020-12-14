@@ -4,7 +4,7 @@ __all__ = ["create_app"]
 
 import structlog
 from aiohttp import web
-from kubernetes import config
+from kubernetes import config as kubeconfig
 from safir.http import init_http_session
 from safir.logging import configure_logging
 from safir.metadata import setup_metadata
@@ -16,14 +16,10 @@ from cachemachine.handlers import init_external_routes, init_internal_routes
 
 logger = structlog.get_logger(__name__)
 
-try:
-    config.load_incluster_config()
-except config.config_exception.ConfigException:
-    logger.exception("Trouble loading kubernetes config, continuing...")
-
 
 def create_app() -> web.Application:
     """Create and configure the aiohttp.web application."""
+    kubeconfig.load_incluster_config()
     config = Configuration()
     configure_logging(
         profile=config.profile,

@@ -1,0 +1,298 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "The root schema",
+    "description": "The root schema comprises the entire JSON document.",
+    "default": {},
+    "examples": [
+        {
+            "name": "jupyter",
+            "labels": {
+                "beta.kubernetes.io/arch": "amd64"
+            },
+            "repomen": [
+                {
+                    "type": "RubinRepoMan",
+                    "repo": "lsstsqre/sciplat-lab",
+                    "recommended_image_url": "lsstsqre/sciplat-lab:recommended",
+                    "num_releases": 1,
+                    "num_weeklies": 2,
+                    "num_dailies": 3
+                },
+                {
+                    "type": "SimpleRepoMan",
+                    "images": [
+                        {
+                            "name": "Weekly 35",
+                            "image_url": "registry.hub.docker.com/lsstsqre/sciplat-lab:w_2020_35"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "required": [
+        "name",
+        "labels",
+        "repomen"
+    ],
+    "properties": {
+        "name": {
+            "$id": "#/properties/name",
+            "type": "string",
+            "title": "The name for this cachemachine instance",
+            "description": "Go to /cachemachine/name to get status on your cachemachine.",
+            "default": "",
+            "examples": [
+                "jupyter"
+            ]
+        },
+        "labels": {
+            "$id": "#/properties/labels",
+            "type": "object",
+            "title": "Kubernetes Label Restriction",
+            "description": "Kubernetes labels to restrict the nodes in the cluster that pull images.",
+            "default": {},
+            "examples": [
+                {
+                    "beta.kubernetes.io/arch": "amd64"
+                }
+            ],
+            "additionalProperties": true
+        },
+        "repomen": {
+            "$id": "#/properties/repomen",
+            "type": "array",
+            "title": "List of repomen",
+            "description": "Repository managers to determine what images to pull.",
+            "default": [],
+            "examples": [
+                [
+                    {
+                        "type": "RubinRepoMan",
+                        "repo": "lsstsqre/sciplat-lab",
+                        "recommended_image_url": "lsstsqre/sciplat-lab:recommended",
+                        "num_releases": 1,
+                        "num_weeklies": 2,
+                        "num_dailies": 3
+                    },
+                    {
+                        "type": "SimpleRepoMan",
+                        "images": [
+                            {
+                                "name": "Weekly 35",
+                                "image_url": "registry.hub.docker.com/lsstsqre/sciplat-lab:w_2020_35"
+                            }
+                        ]
+                    }
+                ]
+            ],
+            "additionalItems": true,
+            "items": {
+                "$id": "#/properties/repomen/items",
+                "anyOf": [
+                    {
+                        "$id": "#/properties/repomen/items/anyOf/0",
+                        "type": "object",
+                        "title": "RubinRepoMan",
+                        "description": "Determine images to pull based on Rubin Observatory tag format.",
+                        "default": {},
+                        "examples": [
+                            {
+                                "type": "RubinRepoMan",
+                                "repo": "lsstsqre/sciplat-lab",
+                                "recommended_image_url": "lsstsqre/sciplat-lab:recommended",
+                                "num_releases": 1,
+                                "num_weeklies": 2,
+                                "num_dailies": 3
+                            }
+                        ],
+                        "required": [
+                            "type",
+                            "repo",
+                            "recommended_image_url",
+                            "num_releases",
+                            "num_weeklies",
+                            "num_dailies"
+                        ],
+                        "optional": [
+                            "registry_url"
+                        ],
+                        "properties": {
+                            "type": {
+                                "$id": "#/properties/repomen/items/anyOf/0/properties/type",
+                                "type": "string",
+                                "title": "Repoman Type Name",
+                                "description": "Use the RubinRepoMan strategy to determine images.",
+                                "default": "",
+                                "examples": [
+                                    "RubinRepoMan"
+                                ]
+                            },
+                            "registry_url": {
+                                "$id": "#/properties/repomen/items/anyOf/0/properties/registry_url",
+                                "type": "string",
+                                "title": "Docker image registry URL",
+                                "description": "Base Docker Registry URL to query for image list",
+                                "default": "",
+                                "examples": [
+                                    "ts-dockerhub.lsst.org"
+                                ]
+                            },
+                            "repo": {
+                                "$id": "#/properties/repomen/items/anyOf/0/properties/repo",
+                                "type": "string",
+                                "title": "Docker image repository URL or image name",
+                                "description": "Docker repository to query.",
+                                "default": "",
+                                "examples": [
+                                    "lsstsqre/sciplat-lab"
+                                ]
+                            },
+                            "recommended_image_url": {
+                                "$id": "#/properties/repomen/items/anyOf/0/properties/recommended_image_url",
+                                "type": "string",
+                                "title": "Recommended docker image URL or name (same format as repo)",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "lsstsqre/sciplat-lab:recommended"
+                                ]
+                            },
+                            "num_releases": {
+                                "$id": "#/properties/repomen/items/anyOf/0/properties/num_releases",
+                                "type": "integer",
+                                "title": "Number of Releases",
+                                "description": "Number of release images to pull.",
+                                "default": 0,
+                                "examples": [
+                                    1
+                                ]
+                            },
+                            "num_weeklies": {
+                                "$id": "#/properties/repomen/items/anyOf/0/properties/num_weeklies",
+                                "type": "integer",
+                                "title": "Number of Weeklies",
+                                "description": "Number of weekly images to pull.",
+                                "default": 0,
+                                "examples": [
+                                    2
+                                ]
+                            },
+                            "num_dailies": {
+                                "$id": "#/properties/repomen/items/anyOf/0/properties/num_dailies",
+                                "type": "integer",
+                                "title": "Number of Dailies",
+                                "description": "Number of daily images to pull.",
+                                "default": 0,
+                                "examples": [
+                                    3
+                                ]
+                            }
+                        },
+                        "additionalProperties": false
+                    },
+                    {
+                        "$id": "#/properties/repomen/items/anyOf/1",
+                        "type": "object",
+                        "title": "Simple Repository Manager",
+                        "description": "Static list of images to pull.",
+                        "default": {},
+                        "examples": [
+                            {
+                                "type": "SimpleRepoMan",
+                                "images": [
+                                    {
+                                        "name": "Weekly 35",
+                                        "image_url": "registry.hub.docker.com/lsstsqre/sciplat-lab:w_2020_35"
+                                    }
+                                ]
+                            }
+                        ],
+                        "required": [
+                            "type",
+                            "images"
+                        ],
+                        "properties": {
+                            "type": {
+                                "$id": "#/properties/repomen/items/anyOf/1/properties/type",
+                                "type": "string",
+                                "title": "Simple Repository Type",
+                                "description": "Use the simple repository manager type.",
+                                "default": "",
+                                "examples": [
+                                    "SimpleRepoMan"
+                                ]
+                            },
+                            "images": {
+                                "$id": "#/properties/repomen/items/anyOf/1/properties/images",
+                                "type": "array",
+                                "title": "Image list",
+                                "description": "Static list of images to pull and names for those images.",
+                                "default": [],
+                                "examples": [
+                                    [
+                                        {
+                                            "name": "Weekly 35",
+                                            "image_url": "registry.hub.docker.com/lsstsqre/sciplat-lab:w_2020_35"
+                                        }
+                                    ]
+                                ],
+                                "additionalItems": true,
+                                "items": {
+                                    "$id": "#/properties/repomen/items/anyOf/1/properties/images/items",
+                                    "anyOf": [
+                                        {
+                                            "$id": "#/properties/repomen/items/anyOf/1/properties/images/items/anyOf/0",
+                                            "type": "object",
+                                            "title": "The first anyOf schema",
+                                            "description": "An explanation about the purpose of this instance.",
+                                            "default": {},
+                                            "examples": [
+                                                {
+                                                    "name": "Weekly 35",
+                                                    "image_url": "registry.hub.docker.com/lsstsqre/sciplat-lab:w_2020_35"
+                                                }
+                                            ],
+                                            "required": [
+                                                "name",
+                                                "image_url"
+                                            ],
+                                            "properties": {
+                                                "name": {
+                                                    "$id": "#/properties/repomen/items/anyOf/1/properties/images/items/anyOf/0/properties/name",
+                                                    "type": "string",
+                                                    "title": "Display name to use for this image",
+                                                    "description": "Friendly display name to show the user to refer to this image.",
+                                                    "default": "",
+                                                    "examples": [
+                                                        "Weekly 35"
+                                                    ]
+                                                },
+                                                "image_url": {
+                                                    "$id": "#/properties/repomen/items/anyOf/1/properties/images/items/anyOf/0/properties/image_url",
+                                                    "type": "string",
+                                                    "title": "Name or URL of docker image",
+                                                    "description": "Name or URL of the image to pull.",
+                                                    "default": "",
+                                                    "examples": [
+                                                        "registry.hub.docker.com/lsstsqre/sciplat-lab:w_2020_35",
+                                                        "lsstsqre/sciplat-lab:w_2020_35"
+                                                    ]
+                                                }
+                                            },
+                                            "additionalProperties": false
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "additionalProperties": false
+                    }
+                ]
+            }
+        }
+    },
+    "additionalProperties": false
+}

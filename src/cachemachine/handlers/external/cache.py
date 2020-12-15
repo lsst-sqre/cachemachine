@@ -2,9 +2,12 @@
 
 __all__ = ["get_tellers", "create_teller", "ask_teller", "stop_teller"]
 
+import json
+from importlib import resources
 from typing import List
 
 from aiohttp import web
+from jsonschema import validate
 
 from cachemachine.automatedteller import AutomatedTeller
 from cachemachine.handlers import routes
@@ -22,6 +25,14 @@ async def get_tellers(request: web.Request) -> web.Response:
 @routes.post("/")
 async def create_teller(request: web.Request) -> web.Response:
     body = await request.json()
+
+    validate(
+        instance=body,
+        schema=json.loads(
+            resources.read_text("cachemachine.schemas", "post.json")
+        ),
+    )
+
     name = body["name"]
     labels = body["labels"]
     repomen: List[RepoMan] = []

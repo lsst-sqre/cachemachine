@@ -14,8 +14,16 @@ class DockerCredentials:
 
 
 @dataclass
+class CachedDockerImage:
+    image_url: str
+    image_hash: str
+    tags: Set[str]
+
+
+@dataclass
 class DockerImage:
     image_url: str
+    image_hash: Optional[str]
     name: str
 
 
@@ -23,7 +31,11 @@ class DockerImageList(list):
     def load(self, data: List[Dict[str, str]]) -> None:
         self.extend(
             [
-                DockerImage(image_url=i["image_url"], name=i["name"])
+                DockerImage(
+                    image_url=i["image_url"],
+                    image_hash=i.get("image_hash", None),
+                    name=i["name"],
+                )
                 for i in data
             ]
         )
@@ -34,9 +46,7 @@ class DockerImageList(list):
 
 class RepoMan(ABC):
     @abstractmethod
-    def desired_images(self, recommended_names: Set[str]) -> DockerImageList:
-        pass
-
-    @abstractmethod
-    def recommended_image_url(self) -> Optional[str]:
+    def desired_images(
+        self, common_cache: List[CachedDockerImage]
+    ) -> DockerImageList:
         pass

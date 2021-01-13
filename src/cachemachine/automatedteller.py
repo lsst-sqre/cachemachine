@@ -61,8 +61,8 @@ class AutomatedTeller:
                 self.available_images = available_images
                 self.desired_images = desired_images
                 self.images_to_cache = images_to_cache
-            except Exception as e:
-                logger.exception("Exception caching images", e)
+            except Exception:
+                logger.exception("Exception caching images")
 
             await asyncio.sleep(60)
 

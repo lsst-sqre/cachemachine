@@ -14,3 +14,4 @@ importlib_metadata
 click
 kubernetes
 jsonschema
+requests==2.25.0

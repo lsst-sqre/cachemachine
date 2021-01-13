@@ -56,17 +56,22 @@ class DockerClient:
 
         if not challenge:
             raise DockerRegistryError("No authentication challenge")
-        elif (
-            challenge.startswith("Basic ") and self.username and self.password
-        ):
-            self.headers["Authorization"] = (
-                "Basic "
-                + BasicAuth(self.username, password=self.password).encode()
-            )
+
+        (challenge_type, params) = challenge.split(" ", 1)
+        challenge_type = challenge_type.lower()
+
+        if challenge_type == "basic":
+            if not self.username or not self.password:
+                raise DockerRegistryError("No password for basic auth")
+
+            self.headers["Authorization"] = BasicAuth(
+                self.username, password=self.password
+            ).encode()
+            logger.debug(f"Auth header is {self.headers}")
             logger.info("Authenticated with basic auth")
-        elif challenge.startswith("Bearer "):
+        elif challenge_type == "bearer":
             parts = {}
-            for p in challenge.removeprefix("Bearer ").split(","):
+            for p in params.split(","):
                 logger.debug(p)
                 (k, v) = p.split("=")
                 parts[k] = v.replace('"', "")

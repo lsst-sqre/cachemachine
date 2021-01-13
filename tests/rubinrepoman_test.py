@@ -13,7 +13,7 @@ from cachemachine.rubinrepoman import RubinRepoMan
 from cachemachine.types import CachedDockerImage
 
 
-def test_rubinrepoman() -> None:
+async def test_rubinrepoman() -> None:
     """Test RubinRepoMan, including going out to docker
 
     Note: This test goes over the network, and will make
@@ -33,7 +33,7 @@ def test_rubinrepoman() -> None:
     common_cache: List[CachedDockerImage] = []
 
     r = RubinRepoMan(body)
-    di = r.desired_images(common_cache)
+    di = await r.desired_images(common_cache)
     assert len(di) == 4
     assert di[0].image_url == "lsstsqre/sciplat-lab:recommended"
     assert di[0].name.startswith("Recommended ")

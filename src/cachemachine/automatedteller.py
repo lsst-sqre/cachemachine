@@ -38,7 +38,9 @@ class AutomatedTeller:
                 self.checker.check()
 
                 for r in self.repomen:
-                    for image in r.desired_images(self.checker.common_cache):
+                    for image in await r.desired_images(
+                        self.checker.common_cache
+                    ):
                         desired_images.append(image)
 
                         available = False

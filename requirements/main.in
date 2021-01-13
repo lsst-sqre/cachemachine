@@ -14,5 +14,3 @@ importlib_metadata
 click
 kubernetes
 jsonschema
-python-dxf
-requests==2.25.0

@@ -12,7 +12,7 @@ class SimpleRepoMan(RepoMan):
         self._images = DockerImageList()
         self._images.load(body["images"])
 
-    def desired_images(
+    async def desired_images(
         self, common_cache: List[CachedDockerImage]
     ) -> DockerImageList:
         return self._images

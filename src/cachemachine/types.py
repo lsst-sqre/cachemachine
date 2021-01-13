@@ -3,14 +3,12 @@ from dataclasses import asdict, dataclass
 from typing import Dict, List, Optional, Set
 
 
-class TellerNotFoundError(Exception):
+class DockerRegistryError(Exception):
     pass
 
 
-@dataclass
-class DockerCredentials:
-    username: Optional[str] = None
-    password: Optional[str] = None
+class TellerNotFoundError(Exception):
+    pass
 
 
 @dataclass
@@ -46,7 +44,7 @@ class DockerImageList(list):
 
 class RepoMan(ABC):
     @abstractmethod
-    def desired_images(
+    async def desired_images(
         self, common_cache: List[CachedDockerImage]
     ) -> DockerImageList:
         pass

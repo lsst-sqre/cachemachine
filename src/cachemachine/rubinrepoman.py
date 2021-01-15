@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 
 import structlog
 
@@ -47,21 +47,29 @@ class RubinRepoMan(RepoMan):
             else:
                 image_url = f"{self.registry_url}/{self.repo}:{t}"
 
-            tag_parts = t.split("_")
-
             if t == self.recommended_tag:
-                aka = set()
+                aka: Set[str] = set()
                 image_hash = await self.docker_client.get_image_hash(t)
 
                 for i in common_cache:
                     if i.image_hash == image_hash:
                         aka = i.tags
 
+                if aka:
+                    friendly_names = [
+                        self._friendly_name(a)
+                        for a in aka
+                        if a != "recommended"
+                    ]
+                    name = f"Recommended ({','.join(friendly_names)})"
+                else:
+                    name = "Recommended"
+
                 images.append(
                     DockerImage(
                         image_url=image_url,
                         image_hash=image_hash,
-                        name=f"Recommended {aka}",
+                        name=name,
                     )
                 )
             elif t.startswith("d_"):
@@ -72,7 +80,7 @@ class RubinRepoMan(RepoMan):
                         DockerImage(
                             image_url=image_url,
                             image_hash=image_hash,
-                            name=f"Daily {tag_parts[2]}/{tag_parts[3]}",
+                            name=self._friendly_name(t),
                         )
                     )
             elif t.startswith("w_"):
@@ -83,19 +91,18 @@ class RubinRepoMan(RepoMan):
                         DockerImage(
                             image_url=image_url,
                             image_hash=image_hash,
-                            name=f"Weekly {tag_parts[2]}",
+                            name=self._friendly_name(t),
                         )
                     )
             elif t.startswith("r"):
                 # Ex: r20_0_0, r20_0_0_rc1
                 if len(releases) < self.num_releases:
                     image_hash = await self.docker_client.get_image_hash(t)
-                    name = "Release " + ".".join(tag_parts)
                     releases.append(
                         DockerImage(
                             image_url=image_url,
                             image_hash=image_hash,
-                            name=name,
+                            name=self._friendly_name(t),
                         )
                     )
             else:
@@ -106,3 +113,16 @@ class RubinRepoMan(RepoMan):
         images.extend(dailies)
         logger.info(f"Returning {images}")
         return images
+
+    def _friendly_name(self, tag: str) -> str:
+        tag_parts = tag.split("_")
+
+        if tag.startswith("d_"):
+            return f"Daily {tag_parts[2]}/{tag_parts[3]}"
+        elif tag.startswith("w_"):
+            return f"Weekly {tag_parts[2]}"
+        elif tag.startswith("r"):
+            return "Release " + ".".join(tag_parts)
+        else:
+            # Should never reach here...
+            raise Exception(f"Unexpected tag name {tag}")

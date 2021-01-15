@@ -37,7 +37,7 @@ async def test_rubinrepoman() -> None:
     di = await r.desired_images(common_cache)
     assert len(di) == 4
     assert di[0].image_url == "lsstsqre/sciplat-lab:recommended"
-    assert di[0].name.startswith("Recommended ")
+    assert di[0].name.startswith("Recommended")
     assert di[1].image_url.startswith("lsstsqre/sciplat-lab:r")
     assert di[1].name.startswith("Release ")
     assert di[2].image_url.startswith("lsstsqre/sciplat-lab:w_")
@@ -91,7 +91,7 @@ async def test_rubinrepoman_tag_picking() -> None:
         di = await r.desired_images(common_cache)
         assert len(di) == 4
         assert di[0].image_url == "lsstsqre/sciplat-lab:recommended"
-        assert di[0].name == "Recommended set()"
+        assert di[0].name == "Recommended"
         assert di[1].image_url == "lsstsqre/sciplat-lab:r21_0_0"
         assert di[1].name == "Release r21.0.0"
         assert di[2].image_url == "lsstsqre/sciplat-lab:w_2021_03"
@@ -99,8 +99,8 @@ async def test_rubinrepoman_tag_picking() -> None:
         assert di[3].image_url == "lsstsqre/sciplat-lab:d_2021_01_13"
         assert di[3].name == "Daily 01/13"
 
-        # Now let's pretend we've got the recommended and r21, which share
-        # the same hash.  We should be able to notice the other tags that
+        # Now let's pretend we've got the images in the cache.
+        # We should be able to notice the other tags that
         # recommended shares in the friendly name of recommended.
         common_cache.extend(
             [
@@ -120,7 +120,7 @@ async def test_rubinrepoman_tag_picking() -> None:
         di = await r.desired_images(common_cache)
         assert len(di) == 4
         assert di[0].image_url == "lsstsqre/sciplat-lab:recommended"
-        assert di[0].name == "Recommended {'r21_0_0', 'recommended'}"
+        assert di[0].name == "Recommended (Release r21.0.0)"
         assert di[1].image_url == "lsstsqre/sciplat-lab:r21_0_0"
         assert di[1].name == "Release r21.0.0"
         assert di[2].image_url == "lsstsqre/sciplat-lab:w_2021_03"

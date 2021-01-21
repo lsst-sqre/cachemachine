@@ -7,6 +7,10 @@ class DockerRegistryError(Exception):
     pass
 
 
+class KubernetesDaemonsetNotFound(Exception):
+    pass
+
+
 class TellerNotFoundError(Exception):
     pass
 

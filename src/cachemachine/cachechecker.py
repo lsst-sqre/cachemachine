@@ -1,8 +1,8 @@
 from typing import Dict, List
 
 import structlog
-from kubernetes.client.api import core_v1_api
 
+from cachemachine.kubernetes import KubernetesClient
 from cachemachine.types import CachedDockerImage
 
 logger = structlog.get_logger(__name__)
@@ -10,12 +10,12 @@ logger = structlog.get_logger(__name__)
 
 class CacheChecker:
     def __init__(self, labels: Dict[str, str]):
-        self.api = core_v1_api.CoreV1Api()
         self.labels = labels
         self.common_cache: List[CachedDockerImage] = []
+        self.kubernetes = KubernetesClient()
 
     def check(self) -> None:
-        nodes = self.api.list_node().items
+        nodes = self.kubernetes.list_nodes()
         logger.debug(f"Inspecting {nodes}")
 
         first_node = True

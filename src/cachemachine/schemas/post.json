@@ -15,7 +15,7 @@
                 {
                     "type": "RubinRepoMan",
                     "repo": "lsstsqre/sciplat-lab",
-                    "recommended_image_url": "lsstsqre/sciplat-lab:recommended",
+                    "recommended_tag": "recommended",
                     "num_releases": 1,
                     "num_weeklies": 2,
                     "num_dailies": 3
@@ -72,7 +72,7 @@
                     {
                         "type": "RubinRepoMan",
                         "repo": "lsstsqre/sciplat-lab",
-                        "recommended_image_url": "lsstsqre/sciplat-lab:recommended",
+                        "recommended_tag": "recommended",
                         "num_releases": 1,
                         "num_weeklies": 2,
                         "num_dailies": 3
@@ -102,7 +102,7 @@
                             {
                                 "type": "RubinRepoMan",
                                 "repo": "lsstsqre/sciplat-lab",
-                                "recommended_image_url": "lsstsqre/sciplat-lab:recommended",
+                                "recommended_tag": "recommended",
                                 "num_releases": 1,
                                 "num_weeklies": 2,
                                 "num_dailies": 3
@@ -111,12 +111,12 @@
                         "required": [
                             "type",
                             "repo",
-                            "recommended_image_url",
                             "num_releases",
                             "num_weeklies",
                             "num_dailies"
                         ],
                         "optional": [
+                            "recommended_tag",
                             "registry_url"
                         ],
                         "properties": {
@@ -150,14 +150,14 @@
                                     "lsstsqre/sciplat-lab"
                                 ]
                             },
-                            "recommended_image_url": {
-                                "$id": "#/properties/repomen/items/anyOf/0/properties/recommended_image_url",
+                            "recommended_tag": {
+                                "$id": "#/properties/repomen/items/anyOf/0/properties/recommended_tag",
                                 "type": "string",
-                                "title": "Recommended docker image URL or name (same format as repo)",
+                                "title": "Recommended docker tag",
                                 "description": "An explanation about the purpose of this instance.",
                                 "default": "",
                                 "examples": [
-                                    "lsstsqre/sciplat-lab:recommended"
+                                    "recommended"
                                 ]
                             },
                             "num_releases": {

@@ -33,11 +33,16 @@ async def test_pull(
     app = create_app()
     client = await aiohttp_client(app)
 
-    desired_images = [
+    expected_images = [
         {
             "image_url": "lsstsqre/sciplat-lab:recommended",
             "image_hash": "sha256:b0b7d97ff9d62ccd049",
-            "name": "Release recommended",
+            "name": "Recommended",
+        },
+        {
+            "image_url": "lsstsqre/sciplat-lab:r21_0_0",
+            "image_hash": "sha256:b0b7d97ff9d62ccd049",
+            "name": "Release r21.0.0",
         },
         {
             "image_url": "lsstsqre/sciplat-lab:w_2021_03",
@@ -58,7 +63,7 @@ async def test_pull(
             {
                 "type": "RubinRepoMan",
                 "repo": "lsstsqre/sciplat-lab",
-                "recommended_image_url": "lsstsqre/sciplat-lab:recommended",
+                "recommended_tag": "recommended",
                 "num_releases": 1,
                 "num_weeklies": 1,
                 "num_dailies": 1,
@@ -70,7 +75,8 @@ async def test_pull(
     logger.debug(response)
     assert response.status == 200
 
-    await asyncio.sleep(1)
+    # Let the engine run through its iterations, then check results.
+    await asyncio.sleep(0.1)
 
     response = await client.get("/cachemachine/jupyter")
     logger.debug(response)
@@ -80,8 +86,8 @@ async def test_pull(
 
     assert data["name"] == post_data["name"]
     assert data["labels"] == post_data["labels"]
-    assert data["desired_images"] == desired_images
-    assert data["available_images"] == desired_images
+    assert data["desired_images"] == expected_images
+    assert data["available_images"] == expected_images
 
     response = await client.delete("/cachemachine/jupyter")
     assert response.status == 200

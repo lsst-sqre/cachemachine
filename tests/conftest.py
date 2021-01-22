@@ -20,19 +20,18 @@ def kubernetes_config() -> Generator:
 @pytest.fixture(autouse=True)
 def sleep_noop() -> Generator:
     with patch.object(cachemachine.automatedteller, "_wait") as mock:
-
         # Patch in a counter that doesn't wait for the
         # first 100 calls.  This will allow us to let
         # the engine run for a while and check the results.
-        # For some reason, mypy struggles with types on
-        # added function attributes, so ignore that for now.
+        counter = 100
+
         async def noop() -> None:
-            if noop.counter == 0:  # type: ignore
+            nonlocal counter
+            if counter == 0:
                 await asyncio.sleep(60)
             else:
-                noop.counter -= 1  # type: ignore
+                counter -= 1
 
-        noop.counter = 100  # type: ignore
         mock.side_effect = noop
         yield
 

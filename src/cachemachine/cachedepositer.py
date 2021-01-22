@@ -1,16 +1,14 @@
-from typing import Dict
-
 import structlog
 
 from cachemachine.config import Configuration
 from cachemachine.kubernetes import KubernetesClient
-from cachemachine.types import KubernetesDaemonsetNotFound
+from cachemachine.types import KubernetesDaemonsetNotFound, KubernetesLabels
 
 logger = structlog.get_logger(__name__)
 
 
 class CacheDepositer:
-    def __init__(self, name: str, labels: Dict[str, str]):
+    def __init__(self, name: str, labels: KubernetesLabels) -> None:
         self.name = name
         self.labels = labels
         self.kubernetes = KubernetesClient()

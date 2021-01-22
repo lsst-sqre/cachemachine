@@ -13,7 +13,7 @@ from cachemachine.automatedteller import AutomatedTeller
 from cachemachine.handlers import routes
 from cachemachine.rubinrepoman import RubinRepoMan
 from cachemachine.simplerepoman import SimpleRepoMan
-from cachemachine.types import RepoMan, TellerNotFoundError
+from cachemachine.types import KubernetesLabels, RepoMan, TellerNotFoundError
 
 
 @routes.get("/")
@@ -34,7 +34,7 @@ async def create_teller(request: web.Request) -> web.Response:
     )
 
     name = body["name"]
-    labels = body["labels"]
+    labels = KubernetesLabels(body["labels"])
     repomen: List[RepoMan] = []
 
     for r in body["repomen"]:

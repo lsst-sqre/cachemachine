@@ -5,7 +5,7 @@ import structlog
 
 from cachemachine.cachechecker import CacheChecker
 from cachemachine.cachedepositer import CacheDepositer
-from cachemachine.types import DockerImageList, RepoMan
+from cachemachine.types import DockerImageList, KubernetesLabels, RepoMan
 
 logger = structlog.get_logger(__name__)
 
@@ -18,7 +18,7 @@ class AutomatedTeller:
     def __init__(
         self,
         name: str,
-        labels: Dict[str, str],
+        labels: KubernetesLabels,
         repomen: Sequence[RepoMan],
     ):
         self.available_images = DockerImageList()

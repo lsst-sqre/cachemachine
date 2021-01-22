@@ -46,6 +46,11 @@ class DockerImageList(list):
         return [asdict(i) for i in self]
 
 
+class KubernetesLabels(dict):
+    def matches(self, node_labels: Dict[str, str]) -> bool:
+        return self.items() <= node_labels.items()
+
+
 class RepoMan(ABC):
     @abstractmethod
     async def desired_images(

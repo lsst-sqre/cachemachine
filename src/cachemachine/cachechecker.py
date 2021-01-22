@@ -1,15 +1,17 @@
-from typing import Dict
-
 import structlog
 
 from cachemachine.kubernetes import KubernetesClient
-from cachemachine.types import CachedDockerImage, DockerImageList
+from cachemachine.types import (
+    CachedDockerImage,
+    DockerImageList,
+    KubernetesLabels,
+)
 
 logger = structlog.get_logger(__name__)
 
 
 class CacheChecker:
-    def __init__(self, labels: Dict[str, str]):
+    def __init__(self, labels: KubernetesLabels):
         self.labels = labels
         self.common_cache = DockerImageList()
         self.kubernetes = KubernetesClient()
@@ -25,7 +27,7 @@ class CacheChecker:
             logger.debug(f"{n.metadata.name} labels: {n.metadata.labels}")
 
             # Do the labels we are looking for match this node?
-            if self.labels.items() <= n.metadata.labels.items():
+            if self.labels.matches(n.metadata.labels):
                 # This is a bit tricky.  The images is a list,
                 # each item containing a particular image, and containing
                 # a list of all the names it is known by.

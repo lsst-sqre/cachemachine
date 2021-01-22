@@ -10,6 +10,10 @@ from cachemachine.types import DockerImageList, RepoMan
 logger = structlog.get_logger(__name__)
 
 
+async def _wait() -> None:
+    await asyncio.sleep(60)
+
+
 class AutomatedTeller:
     def __init__(
         self,
@@ -64,13 +68,13 @@ class AutomatedTeller:
             except Exception:
                 logger.exception("Exception caching images")
 
-            await asyncio.sleep(60)
+            await _wait()
 
     def talk(self) -> Dict[str, Any]:
         return {
             "name": self.name,
             "labels": self.labels,
-            "common_cache": self.checker.common_cache,
+            "common_cache": self.checker.common_cache.dump(),
             "available_images": self.available_images.dump(),
             "desired_images": self.desired_images.dump(),
             "images_to_cache": self.images_to_cache.dump(),

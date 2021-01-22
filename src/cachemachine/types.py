@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
 
 class DockerRegistryError(Exception):
@@ -19,7 +19,7 @@ class TellerNotFoundError(Exception):
 class CachedDockerImage:
     image_url: str
     image_hash: str
-    tags: Set[str]
+    tags: List[str]
 
 
 @dataclass

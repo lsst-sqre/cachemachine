@@ -1,9 +1,9 @@
-from typing import Dict, List
+from typing import Dict
 
 import structlog
 
 from cachemachine.kubernetes import KubernetesClient
-from cachemachine.types import CachedDockerImage
+from cachemachine.types import CachedDockerImage, DockerImageList
 
 logger = structlog.get_logger(__name__)
 
@@ -11,7 +11,7 @@ logger = structlog.get_logger(__name__)
 class CacheChecker:
     def __init__(self, labels: Dict[str, str]):
         self.labels = labels
-        self.common_cache: List[CachedDockerImage] = []
+        self.common_cache = DockerImageList()
         self.kubernetes = KubernetesClient()
 
     def check(self) -> None:
@@ -19,7 +19,7 @@ class CacheChecker:
         logger.debug(f"Inspecting {nodes}")
 
         first_node = True
-        common_cache = []
+        common_cache = DockerImageList()
 
         for n in nodes:
             logger.debug(f"{n.metadata.name} labels: {n.metadata.labels}")
@@ -29,9 +29,12 @@ class CacheChecker:
                 # This is a bit tricky.  The images is a list,
                 # each item containing a particular image, and containing
                 # a list of all the names it is known by.
-                node_images = []
+                node_images = DockerImageList()
                 for i in n.status.images:
-                    tags = set()
+                    tags = []
+                    repository = None
+                    image_hash = None
+
                     for url in i.names:
                         # Each of these "names" can either be a docker image
                         # url that has a hash or a tag in it. (although, with
@@ -40,17 +43,24 @@ class CacheChecker:
                         if url == "<none>@<none>" or url == "<none>:<none>":
                             pass
                         elif "@sha256:" in url:
-                            (image_url, image_hash) = url.split("@sha256:")
+                            (repository, image_hash) = url.split("@")
                         else:
-                            tags.add(url.split(":")[1])
+                            new_tag = url.split(":")[1]
+                            if new_tag not in tags:
+                                tags.append(new_tag)
 
-                    node_images.append(
-                        CachedDockerImage(
-                            image_url=image_url,
-                            image_hash=image_hash,
-                            tags=tags,
-                        )
-                    )
+                    if repository and image_hash:
+                        for t in tags:
+                            other_tags = list(tags)
+                            other_tags.remove(t)
+
+                            node_images.append(
+                                CachedDockerImage(
+                                    image_url=f"{repository}:{t}",
+                                    image_hash=image_hash,
+                                    tags=other_tags,
+                                )
+                            )
 
                 logger.debug(f"{n.metadata.name} images: {node_images}")
 
@@ -61,7 +71,7 @@ class CacheChecker:
                 else:
                     # Calculate what images are available on this node and all
                     # the previously inspected nodes.
-                    new_common_cache = []
+                    new_common_cache = DockerImageList()
 
                     for common_image in common_cache:
                         for node_image in node_images:
@@ -74,7 +84,10 @@ class CacheChecker:
                                 # If we find something that is the same hash,
                                 # take the union of these tags.  It could be
                                 # any of the tags found.
-                                common_image.tags |= node_image.tags
+                                for t in node_image.tags:
+                                    if t not in common_image.tags:
+                                        common_image.tags.append(t)
+
                                 new_common_cache.append(common_image)
 
                     common_cache = new_common_cache

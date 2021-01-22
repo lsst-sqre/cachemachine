@@ -80,17 +80,18 @@ async def test_rubinrepoman_tag_picking(docker_mock: DockerMock) -> None:
     # Now let's pretend we've got the images in the cache.
     # We should be able to notice the other tags that
     # recommended shares in the friendly name of recommended.
+    # In the case of the mock data, recommended is release 21.
     common_cache.extend(
         [
             CachedDockerImage(
                 image_url=di[0].image_url,
                 image_hash=di[0].image_hash,
-                tags={"recommended", "r21_0_0"},
+                tags=["r21_0_0"],
             ),
             CachedDockerImage(
                 image_url=di[1].image_url,
                 image_hash=di[1].image_hash,
-                tags={"recommended", "r21_0_0"},
+                tags=["recommended"],
             ),
         ]
     )

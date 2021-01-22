@@ -43,11 +43,16 @@ class KubernetesMock:
         if name in self.daemonsets:
             raise Exception("Daemonset already exists")
 
-        # if image_url not in self.data:
-        #    raise Exception("Asking for URL that isn't in registry")
+        assert image_url.startswith("lsstsqre/sciplat-lab")
+        (repository, tag) = image_url.split(":", 2)
+        if tag not in self.data:
+            raise Exception("Asking for a tag that isn't in the registry")
 
         self.daemonsets[name] = {
             "finished": False,
+            "tag": tag,
+            "repository": repository,
+            "image_hash": self.data[tag],
             "image_url": image_url,
             "labels": labels,
         }
@@ -65,8 +70,15 @@ class KubernetesMock:
             return False
 
         image_url = self.daemonsets[name]["image_url"]
+        image_hash = self.daemonsets[name]["image_hash"]
+        repository = self.daemonsets[name]["repository"]
+        hash_url = f"{repository}@{image_hash}"
 
-        assert image_url.startswith("lsstsqre/sciplat-lab")
-        names = [image_url]
-        self.nodes[0].status.images.append(V1ContainerImage(names=names))
+        for i in self.nodes[0].status.images:
+            if image_url in i.names:
+                return True
+
+        self.nodes[0].status.images.append(
+            V1ContainerImage(names=[image_url, hash_url])
+        )
         return True

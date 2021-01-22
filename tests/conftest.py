@@ -1,8 +1,11 @@
+import asyncio
 from typing import Generator
 from unittest.mock import patch
 
 import pytest
 from kubernetes import config
+
+import cachemachine.automatedteller
 
 from .docker_mock import DockerMock
 from .kubernetes_mock import KubernetesMock
@@ -11,6 +14,21 @@ from .kubernetes_mock import KubernetesMock
 @pytest.fixture(autouse=True)
 def kubernetes_config() -> Generator:
     with patch.object(config, "load_incluster_config"):
+        yield
+
+
+@pytest.fixture(autouse=True)
+def sleep_noop() -> Generator:
+    with patch.object(cachemachine.automatedteller, "_wait") as mock:
+
+        async def noop() -> None:
+            if noop.counter == 0:
+                await asyncio.sleep(60)
+            else:
+                noop.counter -= 1
+
+        noop.counter = 100
+        mock.side_effect = noop
         yield
 
 

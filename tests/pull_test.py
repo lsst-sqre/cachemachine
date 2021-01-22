@@ -12,6 +12,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from aiohttp.pytest_plugin.test_utils import TestClient
 
+import asyncio
+
 import structlog
 
 from cachemachine.app import create_app
@@ -51,7 +53,7 @@ async def test_pull(
 
     post_data = {
         "name": "jupyter",
-        "labels": {"beta.kubernetes.io/arch": "amd64"},
+        "labels": {"k1": "v1"},
         "repomen": [
             {
                 "type": "RubinRepoMan",
@@ -68,6 +70,8 @@ async def test_pull(
     logger.debug(response)
     assert response.status == 200
 
+    await asyncio.sleep(1)
+
     response = await client.get("/cachemachine/jupyter")
     logger.debug(response)
     assert response.status == 200
@@ -78,3 +82,6 @@ async def test_pull(
     assert data["labels"] == post_data["labels"]
     assert data["desired_images"] == desired_images
     assert data["available_images"] == desired_images
+
+    response = await client.delete("/cachemachine/jupyter")
+    assert response.status == 200

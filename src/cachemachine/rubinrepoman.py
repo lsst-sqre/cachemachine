@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List
 
 import structlog
 
@@ -48,19 +48,17 @@ class RubinRepoMan(RepoMan):
                 image_url = f"{self.registry_url}/{self.repo}:{t}"
 
             if t == self.recommended_tag:
-                aka: Set[str] = set()
+                aka: List[str] = []
                 image_hash = await self.docker_client.get_image_hash(t)
 
                 for i in common_cache:
                     if i.image_hash == image_hash:
-                        aka = i.tags
+                        for x in i.tags:
+                            if x != self.recommended_tag and x not in aka:
+                                aka.append(x)
 
                 if aka:
-                    friendly_names = [
-                        self._friendly_name(a)
-                        for a in aka
-                        if a != "recommended"
-                    ]
+                    friendly_names = [self._friendly_name(a) for a in aka]
                     name = f"Recommended ({','.join(friendly_names)})"
                 else:
                     name = "Recommended"

@@ -72,13 +72,19 @@ class KubernetesMock:
         image_url = self.daemonsets[name]["image_url"]
         image_hash = self.daemonsets[name]["image_hash"]
         repository = self.daemonsets[name]["repository"]
+        labels = self.daemonsets[name]["labels"]
         hash_url = f"{repository}@{image_hash}"
 
-        for i in self.nodes[0].status.images:
-            if image_url in i.names:
-                return True
+        for n in self.nodes:
+            if labels.matches(n.metadata.labels):
+                already_pulled = False
+                for i in n.status.images:
+                    if image_url in i.names:
+                        already_pulled = True
 
-        self.nodes[0].status.images.append(
-            V1ContainerImage(names=[image_url, hash_url])
-        )
+                if not already_pulled:
+                    n.status.images.append(
+                        V1ContainerImage(names=[image_url, hash_url])
+                    )
+
         return True

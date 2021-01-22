@@ -1,3 +1,5 @@
+"""Client for accessing Docker v2 registry using aiohttp."""
+
 import base64
 import json
 from typing import List
@@ -11,7 +13,17 @@ logger = structlog.get_logger(__name__)
 
 
 class DockerClient:
+    """Simple client for querying Docker registry."""
+
     def __init__(self, registry_host: str, repository: str) -> None:
+        """Create a new Docker Client.
+
+        Parameters
+        ----------
+        registry_host: host to contact for registry.
+        repository: name of the docker repository to query,
+          ex: lsstsqre/sciplat-lab
+        """
         self.url = registry_host
         self.repository = repository
         self.session = ClientSession()
@@ -21,6 +33,15 @@ class DockerClient:
         self._lookup_credentials()
 
     async def list_tags(self, authenticate: bool = True) -> List[str]:
+        """List all the tags.
+
+        Lists all the tags for the repository this client is used with.
+
+        Parameters
+        ----------
+        authenticate: should we try and authenticate?  Used internally
+          for retrying after successful authentication.
+        """
         url = f"https://{self.url}/v2/{self.repository}/tags/list"
         async with self.session.get(url, headers=self.headers) as r:
             logger.debug(f"List tags response: {r}")
@@ -35,6 +56,18 @@ class DockerClient:
                 raise DockerRegistryError(f"Unknown error listing tags {r}")
 
     async def get_image_hash(self, tag: str, authenticate: bool = True) -> str:
+        """Get the hash of a tag.
+
+        Get the associated image hash of a Docker tag.
+
+        Parameters
+        ----------
+        tag: the tag to inspect
+        authenticate: should we try and authenticate?  Used internally
+          for retrying after successful authentication.
+
+        Returns the hash as a string, such as "sha256:abcdef"
+        """
         url = f"https://{self.url}/v2/{self.repository}/manifests/{tag}"
         async with self.session.head(url, headers=self.headers) as r:
             logger.debug(f"Get image hash response: {r}")
@@ -47,6 +80,15 @@ class DockerClient:
                 raise DockerRegistryError(f"Unknown error retrieving hash {r}")
 
     async def _authenticate(self, response: ClientResponse) -> None:
+        """Internal method to authenticate after getting an auth challenge.
+
+        Doesn't return anything but will set additional headers for future
+        requests.
+
+        Parameters
+        ----------
+        response: response that contains an auth challenge.
+        """
         logger.debug(type(response))
         logger.debug(f"Authenticating {response}")
 
@@ -61,6 +103,7 @@ class DockerClient:
         challenge_type = challenge_type.lower()
 
         if challenge_type == "basic":
+            # Basic auth is used by the Nexus Docker Registry.
             if not self.username or not self.password:
                 raise DockerRegistryError("No password for basic auth")
 
@@ -70,6 +113,7 @@ class DockerClient:
             logger.debug(f"Auth header is {self.headers}")
             logger.info("Authenticated with basic auth")
         elif challenge_type == "bearer":
+            # Bearer is used by Docker's official registry.
             parts = {}
             for p in params.split(","):
                 logger.debug(p)
@@ -96,6 +140,11 @@ class DockerClient:
             )
 
     def _lookup_credentials(self) -> None:
+        """Find credentials for the current client.
+
+        Using the repository host, look for an entry in the dockerconfig
+        that contains a username and password for authenticating.
+        """
         self.username = None
         self.password = None
 

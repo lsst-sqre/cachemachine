@@ -1,3 +1,5 @@
+"""Kubernetes client abstraction for cachemachine."""
+
 from pathlib import Path
 from typing import Dict, List
 
@@ -24,12 +26,26 @@ logger = structlog.get_logger(__name__)
 
 
 class KubernetesClient:
+    """A client for cachemachine's usage of Kubernetes.
+
+    This provides a level of abstraction away from the python-kubernetes
+    objects and models.  By hiding these obscure objects here it makes
+    the code easier to mock and test.
+    """
+
     def __init__(self) -> None:
+        """Create a new client for the cluster we are running in."""
         self.namespace = Path(NAMESPACE_FILE).read_text().strip()
         self.core_api = core_v1_api.CoreV1Api()
         self.apps_api = AppsV1Api()
 
     def list_nodes(self) -> List[V1Node]:
+        """List all the nodes in the Kubernetes cluster.
+
+        This contains a complex object hierarchy which contains
+        information about the node, including its Docker image
+        cache.
+        """
         return self.core_api.list_node().items
 
     def daemonset_create(
@@ -39,6 +55,19 @@ class KubernetesClient:
         pull_secret_name: str,
         labels: Dict[str, str],
     ) -> None:
+        """Create a new Kubernetes daemonset.
+
+        Parameters
+        ----------
+        name: Name of the daemonset.  This filters down to the pods
+          created and the name to use to find this in kubectl.
+        image_url: URL of the docker image to pull for this daemonset.
+        pull_secret_name: Name of the Kubernetes secret to use while pulling
+          this image.  This allows for Kubernetes to authenticate while
+          pulling.
+        labels: Kubernetes label restriction for which nodes the daemonset's
+          pods should run on.
+        """
         # Make a container that just sits for 1200 seconds.  The time is
         # arbitrary, but long enough for us to clean it up before it
         # restarts.  Sadly with a DaemonSet, you can't set the restart
@@ -74,6 +103,7 @@ class KubernetesClient:
         self.apps_api.create_namespaced_daemon_set(self.namespace, ds)
 
     def daemonset_delete(self, name: str) -> None:
+        """Delete the daemonset of the given name."""
         try:
             logger.info(f"Deleting daemonset {name}")
             status = self.apps_api.delete_namespaced_daemon_set(
@@ -85,6 +115,18 @@ class KubernetesClient:
             raise
 
     def daemonset_finished(self, name: str) -> bool:
+        """Check if the daemonset of the given name is finished pulling.
+
+        Parameters
+        ----------
+        name: Name of the daemonset to check on.
+
+        Returns
+        -------
+        True: if the daemonset has pulled the images on all nodes,
+          and is running.
+        False: if the daemonset is still pulling on at least one node.
+        """
         try:
             logger.info(f"Checking on status for {name}")
             ds_status = self.apps_api.read_namespaced_daemon_set_status(

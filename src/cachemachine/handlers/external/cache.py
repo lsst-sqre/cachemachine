@@ -1,4 +1,4 @@
-"""Handlers for the app's external root, ``/<app-name>/``."""
+"""Handlers for cachemachine's external root, /cachemachine/."""
 
 __all__ = [
     "list_machines",
@@ -28,12 +28,25 @@ from cachemachine.types import (
 
 @routes.get("/")
 async def list_machines(request: web.Request) -> web.Response:
+    """GET /cachemachine
+
+    List the current names of all existing cachemachines.
+
+    Returns a json list of the names as strings.
+    """
     manager = request.config_dict["manager"]
     return web.json_response(manager.list())
 
 
 @routes.post("/")
 async def create_machine(request: web.Request) -> web.Response:
+    """POST /cachemachine
+
+    Create a new cachemachine with the details from the body.
+    Schema for the body is validated against the post.json file.
+
+    Returns the JSON of the newly created cachemachine.
+    """
     body = await request.json()
 
     validate(
@@ -63,6 +76,12 @@ async def create_machine(request: web.Request) -> web.Response:
 
 @routes.get("/{name}")
 async def get_machine(request: web.Request) -> web.Response:
+    """GET /cachemachine/{name}
+
+    Get the details of the cachemachine of the given name.
+
+    Returns the JSON of the requested cachemachine.
+    """
     name = request.match_info["name"]
     manager = request.config_dict["manager"]
 
@@ -75,6 +94,14 @@ async def get_machine(request: web.Request) -> web.Response:
 
 @routes.get("/{name}/available")
 async def available_images(request: web.Request) -> web.Response:
+    """GET /cachemachine/{name}/available
+
+    Get the list of available Docker images that have been pulled
+    to all the nodes the cachemachine is watching.
+
+    Returns a JSON list of objects containing the image name and
+    a friendly name to present to the user.
+    """
     name = request.match_info["name"]
     manager = request.config_dict["manager"]
 
@@ -87,6 +114,12 @@ async def available_images(request: web.Request) -> web.Response:
 
 @routes.delete("/{name}")
 async def stop_machine(request: web.Request) -> web.Response:
+    """DELETE /cachemachine/{name}
+
+    Stop the cachemachine with the given name.  This will stop
+    the cachemachine from pulling images and stop all currently
+    pulling daemonsets.
+    """
     name = request.match_info["name"]
     manager = request.config_dict["manager"]
     await manager.release(name)

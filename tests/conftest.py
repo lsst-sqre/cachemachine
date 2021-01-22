@@ -1,3 +1,5 @@
+"""Pytest fixtures to use for testing."""
+
 import asyncio
 from typing import Generator
 from unittest.mock import patch
@@ -13,16 +15,29 @@ from .kubernetes_mock import KubernetesMock
 
 @pytest.fixture(autouse=True)
 def kubernetes_config() -> Generator:
+    """Mocks out load_incluster_config with a noop.
+
+    load_incluster_config is what you are supposed to call running
+    in a kubernetes cluster to prepare the client.  This throws an
+    exception when run outside of a cluster."""
     with patch.object(config, "load_incluster_config"):
         yield
 
 
 @pytest.fixture(autouse=True)
 def sleep_noop() -> Generator:
+    """Mocks out time / waiting.
+
+    Cachemachine will call _wait to wait until the next time it should
+    check for changes and update its state.  For testing, we aren't
+    waiting on a real kubernetes, so speed up time by nooping this.
+
+    But only for a certain number of iterations.  Because the mock
+    kubernetes daemonset only takes 2 iterations to complete, this
+    makes all the tests reproducible.  After that number of iterations,
+    the test is considered over, so waiting for a while while the
+    app is torn down from the test."""
     with patch.object(cachemachine.cachemachine, "_wait") as mock:
-        # Patch in a counter that doesn't wait for the
-        # first 100 calls.  This will allow us to let
-        # the engine run for a while and check the results.
         counter = 100
 
         async def noop() -> None:
@@ -32,10 +47,15 @@ def sleep_noop() -> Generator:
             else:
                 counter -= 1
 
+        # Note: since this is async, we need to use side_effect,
+        # not return_value.
         mock.side_effect = noop
         yield
 
 
+"""Mock docker registry containing tags of a Rubin format and some
+pretend hashes.  Note, hashes aren't the correct length, but that
+doesn't matter."""
 mock_registry = {
     "recommended": "sha256:b0b7d97ff9d62ccd049",
     "r21_0_0": "sha256:b0b7d97ff9d62ccd049",
@@ -48,6 +68,7 @@ mock_registry = {
 
 @pytest.fixture
 def docker_mock() -> Generator:
+    """Use the mock docker client."""
     with patch("cachemachine.rubinrepoman.DockerClient") as mock:
         mock.return_value = DockerMock(mock_registry)
         yield
@@ -55,6 +76,7 @@ def docker_mock() -> Generator:
 
 @pytest.fixture
 def kubernetes_mock() -> Generator:
+    """Use the mock kubernetes client."""
     kube_mock = KubernetesMock(mock_registry)
     with patch("cachemachine.cachemachine.KubernetesClient") as mock:
         mock.return_value = kube_mock

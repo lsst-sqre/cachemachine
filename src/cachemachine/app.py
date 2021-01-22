@@ -39,6 +39,8 @@ def create_app() -> web.Application:
     sub_app.add_routes(init_external_routes())
     root_app.add_subapp(f'/{root_app["safir/config"].name}', sub_app)
 
+    # Keep track of the CacheMachineManager,
+    # which in spirit is a singleton.
     manager = CacheMachineManager()
     root_app["manager"] = manager
     root_app.on_startup.append(manager.init)

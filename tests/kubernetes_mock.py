@@ -1,3 +1,4 @@
+"""Mock Kubernetes client."""
 from typing import Any, Dict, List
 
 from kubernetes.client import (
@@ -11,10 +12,19 @@ from cachemachine.types import KubernetesDaemonsetNotFound
 
 
 class KubernetesMock:
+    """Mock Kubernetes client that pretends to be a cluster."""
+
     def __init__(self, data: Dict[str, str]) -> None:
+        """Create a mock kubernetes cluster.
+
+        data is the mock registry data to ensure images exist
+        and to choose tags."""
         self.data = data
         self.daemonsets: Dict[str, Any] = {}
 
+        # Create two nodes in our pretend cluster.  One we will
+        # pull to, and one we won't.  This uses the python kubernetes
+        # objects to look like what the client returns.
         n1 = V1Node(
             metadata=V1ObjectMeta(name="n1", labels={"k1": "v1"}),
             status=V1NodeStatus(
@@ -31,6 +41,7 @@ class KubernetesMock:
         self.nodes = [n1, n2]
 
     def list_nodes(self) -> List[V1Node]:
+        """Return the current status of all nodes."""
         return self.nodes
 
     def daemonset_create(
@@ -40,6 +51,19 @@ class KubernetesMock:
         pull_secret_name: str,
         labels: Dict[str, str],
     ) -> None:
+        """Mock out creating a daemonset.
+
+        This keeps track of the parameters in a dict called daemonsets.
+        Once the status is checked on twice, the images will be considered
+        pulled by the nodes.
+
+        Parameters
+        ----------
+        name: name of the daemonset in kubernetes.  Must be unique.
+        image_url: docker image for the containers of the daemonset.
+        pull_secret_name: unused.  Used by kubernetes to auth to docker.
+        labels: Labels to restrict where the daemonsets spawn.
+        """
         if name in self.daemonsets:
             raise Exception("Daemonset already exists")
 
@@ -58,9 +82,22 @@ class KubernetesMock:
         }
 
     def daemonset_delete(self, name: str) -> None:
+        """Delete a mock daemonset with the given name."""
         del self.daemonsets[name]
 
     def daemonset_finished(self, name: str) -> bool:
+        """Check the status of a daemonset with the given name.
+
+        On the first check, we set a flag.
+        On the second check, we insert the image into the caches
+        where the node labels match what was provided to create
+        the daemonset.
+
+        Returns
+        -------
+        True: if the daemonset is finished pulling and running.
+        False: the daemonset is still starting and pulling images.
+        """
         if name not in self.daemonsets:
             raise KubernetesDaemonsetNotFound()
 

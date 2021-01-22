@@ -71,6 +71,7 @@ async def test_pull(
         ],
     }
 
+    # Create a cachemachine with the post data
     response = await client.post("/cachemachine/", json=post_data)
     logger.debug(response)
     assert response.status == 200
@@ -78,16 +79,19 @@ async def test_pull(
     # Let the engine run through its iterations, then check results.
     await asyncio.sleep(0.1)
 
+    # Check the status of the cachemachine.
     response = await client.get("/cachemachine/jupyter")
     logger.debug(response)
     assert response.status == 200
     data = await response.json()
     logger.debug(data)
 
+    # Check results.
     assert data["name"] == post_data["name"]
     assert data["labels"] == post_data["labels"]
     assert data["desired_images"] == expected_images
     assert data["available_images"] == expected_images
 
+    # Delete cachemachine.
     response = await client.delete("/cachemachine/jupyter")
     assert response.status == 200

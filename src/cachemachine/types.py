@@ -11,7 +11,7 @@ class KubernetesDaemonsetNotFound(Exception):
     pass
 
 
-class TellerNotFoundError(Exception):
+class CacheMachineNotFoundError(Exception):
     pass
 
 

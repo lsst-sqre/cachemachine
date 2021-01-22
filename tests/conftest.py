@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 from kubernetes import config
 
-import cachemachine.automatedteller
+import cachemachine.cachemachine
 
 from .docker_mock import DockerMock
 from .kubernetes_mock import KubernetesMock
@@ -19,7 +19,7 @@ def kubernetes_config() -> Generator:
 
 @pytest.fixture(autouse=True)
 def sleep_noop() -> Generator:
-    with patch.object(cachemachine.automatedteller, "_wait") as mock:
+    with patch.object(cachemachine.cachemachine, "_wait") as mock:
         # Patch in a counter that doesn't wait for the
         # first 100 calls.  This will allow us to let
         # the engine run for a while and check the results.
@@ -56,6 +56,6 @@ def docker_mock() -> Generator:
 @pytest.fixture
 def kubernetes_mock() -> Generator:
     kube_mock = KubernetesMock(mock_registry)
-    with patch("cachemachine.automatedteller.KubernetesClient") as mock:
+    with patch("cachemachine.cachemachine.KubernetesClient") as mock:
         mock.return_value = kube_mock
         yield

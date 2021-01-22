@@ -2,11 +2,18 @@
 ``/<app-name>/``.
 """
 
-__all__ = ["get_tellers", "ask_teller", "create_teller", "stop_teller"]
+__all__ = [
+    "list_machines",
+    "create_machine",
+    "get_machine",
+    "available_images",
+    "stop_machine",
+]
 
 from cachemachine.handlers.external.cache import (
-    ask_teller,
-    create_teller,
-    get_tellers,
-    stop_teller,
+    available_images,
+    create_machine,
+    get_machine,
+    list_machines,
+    stop_machine,
 )

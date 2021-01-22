@@ -10,7 +10,7 @@ from safir.logging import configure_logging
 from safir.metadata import setup_metadata
 from safir.middleware import bind_logger
 
-from cachemachine.automatedtellermanager import AutomatedTellerManager
+from cachemachine.cachemachinemanager import CacheMachineManager
 from cachemachine.config import Configuration
 from cachemachine.handlers import init_external_routes, init_internal_routes
 
@@ -39,8 +39,8 @@ def create_app() -> web.Application:
     sub_app.add_routes(init_external_routes())
     root_app.add_subapp(f'/{root_app["safir/config"].name}', sub_app)
 
-    manager = AutomatedTellerManager()
-    root_app["automatedtellermanager"] = manager
+    manager = CacheMachineManager()
+    root_app["manager"] = manager
     root_app.on_startup.append(manager.init)
     root_app.on_cleanup.append(manager.cleanup)
 

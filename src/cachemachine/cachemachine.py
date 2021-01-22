@@ -20,7 +20,7 @@ async def _wait() -> None:
     await asyncio.sleep(60)
 
 
-class AutomatedTeller:
+class CacheMachine:
     def __init__(
         self,
         name: str,
@@ -174,7 +174,7 @@ class AutomatedTeller:
         except KubernetesDaemonsetNotFound:
             return False
 
-    def talk(self) -> Dict[str, Any]:
+    def dump(self) -> Dict[str, Any]:
         return {
             "name": self.name,
             "labels": self.labels,

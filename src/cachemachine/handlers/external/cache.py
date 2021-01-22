@@ -1,6 +1,12 @@
 """Handlers for the app's external root, ``/<app-name>/``."""
 
-__all__ = ["get_tellers", "create_teller", "ask_teller", "stop_teller"]
+__all__ = [
+    "list_machines",
+    "create_machine",
+    "get_machine",
+    "available_images",
+    "stop_machine",
+]
 
 import json
 from importlib import resources
@@ -9,21 +15,25 @@ from typing import List
 from aiohttp import web
 from jsonschema import validate
 
-from cachemachine.automatedteller import AutomatedTeller
+from cachemachine.cachemachine import CacheMachine
 from cachemachine.handlers import routes
 from cachemachine.rubinrepoman import RubinRepoMan
 from cachemachine.simplerepoman import SimpleRepoMan
-from cachemachine.types import KubernetesLabels, RepoMan, TellerNotFoundError
+from cachemachine.types import (
+    CacheMachineNotFoundError,
+    KubernetesLabels,
+    RepoMan,
+)
 
 
 @routes.get("/")
-async def get_tellers(request: web.Request) -> web.Response:
-    manager = request.config_dict["automatedtellermanager"]
-    return web.json_response(manager.list_tellers())
+async def list_machines(request: web.Request) -> web.Response:
+    manager = request.config_dict["manager"]
+    return web.json_response(manager.list())
 
 
 @routes.post("/")
-async def create_teller(request: web.Request) -> web.Response:
+async def create_machine(request: web.Request) -> web.Response:
     body = await request.json()
 
     validate(
@@ -45,39 +55,39 @@ async def create_teller(request: web.Request) -> web.Response:
         else:
             return web.HTTPBadRequest()
 
-    teller = AutomatedTeller(name, labels, repomen)
-    manager = request.config_dict["automatedtellermanager"]
-    await manager.manage_teller(teller)
-    return web.json_response(teller.talk())
+    cm = CacheMachine(name, labels, repomen)
+    manager = request.config_dict["manager"]
+    await manager.manage(cm)
+    return web.json_response(cm.dump())
 
 
 @routes.get("/{name}")
-async def ask_teller(request: web.Request) -> web.Response:
+async def get_machine(request: web.Request) -> web.Response:
     name = request.match_info["name"]
-    manager = request.config_dict["automatedtellermanager"]
+    manager = request.config_dict["manager"]
 
     try:
-        teller = manager.get_teller(name)
-        return web.json_response(teller.talk())
-    except TellerNotFoundError:
+        cm = manager.get(name)
+        return web.json_response(cm.dump())
+    except CacheMachineNotFoundError:
         raise web.HTTPNotFound()
 
 
 @routes.get("/{name}/available")
 async def available_images(request: web.Request) -> web.Response:
     name = request.match_info["name"]
-    manager = request.config_dict["automatedtellermanager"]
+    manager = request.config_dict["manager"]
 
     try:
-        teller = manager.get_teller(name)
-        return web.json_response(teller.available_images.dump())
-    except TellerNotFoundError:
+        cm = manager.get(name)
+        return web.json_response(cm.available_images.dump())
+    except CacheMachineNotFoundError:
         raise web.HTTPNotFound()
 
 
 @routes.delete("/{name}")
-async def stop_teller(request: web.Request) -> web.Response:
+async def stop_machine(request: web.Request) -> web.Response:
     name = request.match_info["name"]
-    manager = request.config_dict["automatedtellermanager"]
-    await manager.release_teller(name)
+    manager = request.config_dict["manager"]
+    await manager.release(name)
     return web.HTTPOk()

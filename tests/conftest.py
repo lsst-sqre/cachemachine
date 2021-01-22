@@ -56,9 +56,6 @@ def docker_mock() -> Generator:
 @pytest.fixture
 def kubernetes_mock() -> Generator:
     kube_mock = KubernetesMock(mock_registry)
-    with patch("cachemachine.automatedteller.KubernetesClient") as m1, patch(
-        "cachemachine.cachechecker.KubernetesClient"
-    ) as m2:
-        m1.return_value = kube_mock
-        m2.return_value = kube_mock
+    with patch("cachemachine.automatedteller.KubernetesClient") as mock:
+        mock.return_value = kube_mock
         yield

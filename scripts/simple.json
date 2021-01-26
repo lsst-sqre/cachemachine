@@ -1,0 +1,25 @@
+{
+  "name": "simple",
+  "labels": {
+    "beta.kubernetes.io/arch": "amd64"
+  },
+  "repomen": [
+    {
+      "type": "SimpleRepoMan",
+      "images": [
+          {
+              "name": "Weekly 35",
+              "image_url": "registry.hub.docker.com/lsstsqre/sciplat-lab:w_2020_35"
+          },
+          {
+              "name": "Weekly 36",
+              "image_url": "registry.hub.docker.com/lsstsqre/sciplat-lab:w_2020_36"
+          },
+          {
+              "name": "Weekly 37",
+              "image_url": "registry.hub.docker.com/lsstsqre/sciplat-lab:w_2020_37"
+          }
+      ]
+    }
+  ]
+}

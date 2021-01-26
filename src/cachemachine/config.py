@@ -28,8 +28,15 @@ class Configuration:
     Set with the ``SAFIR_LOGGER`` environment variable.
     """
 
-    log_level: str = os.getenv("SAFIR_LOG_LEVEL", "INFO")
+    log_level: str = os.getenv("SAFIR_LOG_LEVEL", "DEBUG")
     """The log level of the application's logger.
 
     Set with the ``SAFIR_LOG_LEVEL`` environment variable.
+    """
+
+    docker_secret_name: str = os.getenv("DOCKER_SECRET_NAME", "")
+    """Name of the kubernetes secret to use to pull images.
+
+    Set by the ``DOCKER_SECRET_NAME`` environment variable,
+    configured by the helm chart.
     """

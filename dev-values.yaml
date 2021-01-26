@@ -1,0 +1,15 @@
+host: "minikube.lsst.codes"
+
+image:
+  tag: dev
+  pullPolicy: Never
+
+ingress:
+  enabled: true
+  hosts:
+    - host: minikube.lsst.codes
+      paths: ["/cachemachine"]
+
+vault_secrets:
+  enabled: true
+  path: "secret/k8s_operator/minikube.lsst.codes/cachemachine"

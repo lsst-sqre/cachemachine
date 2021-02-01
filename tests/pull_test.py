@@ -33,24 +33,26 @@ async def test_pull(
     app = create_app()
     client = await aiohttp_client(app)
 
+    HOST = "registry.hub.docker.com"
+
     expected_images = [
         {
-            "image_url": "lsstsqre/sciplat-lab:recommended",
+            "image_url": f"{HOST}/lsstsqre/sciplat-lab:recommended",
             "image_hash": "sha256:b0b7d97ff9d62ccd049",
             "name": "Recommended",
         },
         {
-            "image_url": "lsstsqre/sciplat-lab:r21_0_0",
+            "image_url": f"{HOST}/lsstsqre/sciplat-lab:r21_0_0",
             "image_hash": "sha256:b0b7d97ff9d62ccd049",
             "name": "Release r21.0.0",
         },
         {
-            "image_url": "lsstsqre/sciplat-lab:w_2021_03",
+            "image_url": f"{HOST}/lsstsqre/sciplat-lab:w_2021_03",
             "image_hash": "sha256:bb16e5ea71bd7139779",
             "name": "Weekly 03",
         },
         {
-            "image_url": "lsstsqre/sciplat-lab:d_2021_01_13",
+            "image_url": f"{HOST}/lsstsqre/sciplat-lab:d_2021_01_13",
             "image_hash": "sha256:343b17341d0e961472",
             "name": "Daily 01/13",
         },

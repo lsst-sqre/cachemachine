@@ -67,7 +67,9 @@ class KubernetesMock:
         if name in self.daemonsets:
             raise Exception("Daemonset already exists")
 
-        assert image_url.startswith("lsstsqre/sciplat-lab")
+        assert image_url.startswith(
+            "registry.hub.docker.com/lsstsqre/sciplat-lab"
+        )
         (repository, tag) = image_url.split(":", 2)
         if tag not in self.data:
             raise Exception("Asking for a tag that isn't in the registry")

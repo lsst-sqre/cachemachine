@@ -54,9 +54,9 @@ class CacheMachine:
 
                         available = False
                         for i in self.common_cache:
-                            if i.image_url == image.image_url and (
-                                image.image_hash is None
-                                or i.image_hash == image.image_hash
+                            if (
+                                i.image_hash == image.image_hash
+                                or i.image_url == image.image_url
                             ):
                                 available_images.append(image)
                                 available = True

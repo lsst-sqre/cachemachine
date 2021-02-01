@@ -70,10 +70,7 @@ class RubinRepoMan(RepoMan):
         for t in tags:
             logger.debug(f"Checking tag: {t}")
 
-            if self.registry_url == DOCKER_REGISTRY_HOST:
-                image_url = f"{self.repo}:{t}"
-            else:
-                image_url = f"{self.registry_url}/{self.repo}:{t}"
+            image_url = f"{self.registry_url}/{self.repo}:{t}"
 
             if t == self.recommended_tag:
                 # Logic for generating the name of the recommended tag here.

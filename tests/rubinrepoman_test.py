@@ -14,6 +14,8 @@ from cachemachine.types import CachedDockerImage
 
 from .docker_mock import DockerMock
 
+HOST = "registry.hub.docker.com"
+
 
 async def test_rubinrepoman() -> None:
     """Test RubinRepoMan, including going out to docker
@@ -37,13 +39,13 @@ async def test_rubinrepoman() -> None:
     r = RubinRepoMan(body)
     di = await r.desired_images(common_cache)
     assert len(di) == 4
-    assert di[0].image_url == "lsstsqre/sciplat-lab:recommended"
+    assert di[0].image_url == f"{HOST}/lsstsqre/sciplat-lab:recommended"
     assert di[0].name.startswith("Recommended")
-    assert di[1].image_url.startswith("lsstsqre/sciplat-lab:r")
+    assert di[1].image_url.startswith(f"{HOST}/lsstsqre/sciplat-lab:r")
     assert di[1].name.startswith("Release ")
-    assert di[2].image_url.startswith("lsstsqre/sciplat-lab:w_")
+    assert di[2].image_url.startswith(f"{HOST}/lsstsqre/sciplat-lab:w_")
     assert di[2].name.startswith("Weekly ")
-    assert di[3].image_url.startswith("lsstsqre/sciplat-lab:d_")
+    assert di[3].image_url.startswith(f"{HOST}/lsstsqre/sciplat-lab:d_")
     assert di[3].name.startswith("Daily ")
 
 
@@ -68,13 +70,13 @@ async def test_rubinrepoman_tag_picking(docker_mock: DockerMock) -> None:
     r = RubinRepoMan(body)
     di = await r.desired_images(common_cache)
     assert len(di) == 4
-    assert di[0].image_url == "lsstsqre/sciplat-lab:recommended"
+    assert di[0].image_url == f"{HOST}/lsstsqre/sciplat-lab:recommended"
     assert di[0].name == "Recommended"
-    assert di[1].image_url == "lsstsqre/sciplat-lab:r21_0_0"
+    assert di[1].image_url == f"{HOST}/lsstsqre/sciplat-lab:r21_0_0"
     assert di[1].name == "Release r21.0.0"
-    assert di[2].image_url == "lsstsqre/sciplat-lab:w_2021_03"
+    assert di[2].image_url == f"{HOST}/lsstsqre/sciplat-lab:w_2021_03"
     assert di[2].name == "Weekly 03"
-    assert di[3].image_url == "lsstsqre/sciplat-lab:d_2021_01_13"
+    assert di[3].image_url == f"{HOST}/lsstsqre/sciplat-lab:d_2021_01_13"
     assert di[3].name == "Daily 01/13"
 
     # Now let's pretend we've got the images in the cache.
@@ -98,11 +100,11 @@ async def test_rubinrepoman_tag_picking(docker_mock: DockerMock) -> None:
 
     di = await r.desired_images(common_cache)
     assert len(di) == 4
-    assert di[0].image_url == "lsstsqre/sciplat-lab:recommended"
+    assert di[0].image_url == f"{HOST}/lsstsqre/sciplat-lab:recommended"
     assert di[0].name == "Recommended (Release r21.0.0)"
-    assert di[1].image_url == "lsstsqre/sciplat-lab:r21_0_0"
+    assert di[1].image_url == f"{HOST}/lsstsqre/sciplat-lab:r21_0_0"
     assert di[1].name == "Release r21.0.0"
-    assert di[2].image_url == "lsstsqre/sciplat-lab:w_2021_03"
+    assert di[2].image_url == f"{HOST}/lsstsqre/sciplat-lab:w_2021_03"
     assert di[2].name == "Weekly 03"
-    assert di[3].image_url == "lsstsqre/sciplat-lab:d_2021_01_13"
+    assert di[3].image_url == f"{HOST}/lsstsqre/sciplat-lab:d_2021_01_13"
     assert di[3].name == "Daily 01/13"

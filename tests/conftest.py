@@ -57,6 +57,7 @@ def sleep_noop() -> Generator:
 pretend hashes.  Note, hashes aren't the correct length, but that
 doesn't matter."""
 mock_registry = {
+    "prepuller_pulled_recommended": "sha256:b0b7d97ff9d62ccd049",
     "recommended": "sha256:b0b7d97ff9d62ccd049",
     "r21_0_0": "sha256:b0b7d97ff9d62ccd049",
     "w_2021_03": "sha256:bb16e5ea71bd7139779",
@@ -71,7 +72,7 @@ def docker_mock() -> Generator:
     """Use the mock docker client."""
     with patch("cachemachine.rubinrepoman.DockerClient") as mock:
         mock.return_value = DockerMock(mock_registry)
-        yield
+        yield mock.return_value
 
 
 @pytest.fixture
@@ -80,4 +81,4 @@ def kubernetes_mock() -> Generator:
     kube_mock = KubernetesMock(mock_registry)
     with patch("cachemachine.cachemachine.KubernetesClient") as mock:
         mock.return_value = kube_mock
-        yield
+        yield mock.return_value

@@ -1,4 +1,5 @@
 import asyncio
+from collections import defaultdict
 from typing import Any, Dict, Sequence
 
 import structlog
@@ -8,7 +9,9 @@ from cachemachine.kubernetes import KubernetesClient
 from cachemachine.types import (
     CachedDockerImage,
     DockerImageList,
+    ImageEntry,
     KubernetesDaemonsetNotFound,
+    KubernetesImageHashNotFound,
     KubernetesLabels,
     RepoMan,
 )
@@ -54,9 +57,9 @@ class CacheMachine:
 
                         available = False
                         for i in self.common_cache:
-                            if (
-                                i.image_hash == image.image_hash
-                                or i.image_url == image.image_url
+                            if i.image_url == image.image_url and (
+                                image.image_hash is None
+                                or i.image_hash == image.image_hash
                             ):
                                 available_images.append(image)
                                 available = True
@@ -92,36 +95,55 @@ class CacheMachine:
                 # a list of all the names it is known by.
                 node_images = DockerImageList()
                 for i in n.status.images:
-                    tags = []
-                    repository = None
-                    image_hash = None
+                    # Each of these "names" can either be a docker image
+                    # url that has a hash or a tag in it. (although, with
+                    # where the @ sign is, I'm not sure if it really
+                    # counts).  Also, images that have the same hash (and
+                    # are therefore the same image), but different
+                    # repositories can exist if they share that hash.
+                    # But each repository has an entry with the hash and
+                    # additional entries with the tags.
+                    # Example:
+                    #
+                    # ['docker.io/lsstsqre/sciplat-lab@sha256:be4...a7',
+                    #  'registry.hub.docker.com/lsstsqre/sciplat-lab@sha256:be4...a7',
+                    #  'docker.io/lsstsqre/sciplat-lab:recommended',
+                    #  'registry.hub.docker.com/lsstsqre/sciplat-lab:recommended',
+                    #  'registry.hub.docker.com/lsstsqre/sciplat-lab:w_2021_05']
 
+                    # Let's store everything by repository, then collate the
+                    # tags and hash.
+                    entries: Dict[str, ImageEntry] = defaultdict(ImageEntry)
                     for url in i.names:
-                        # Each of these "names" can either be a docker image
-                        # url that has a hash or a tag in it. (although, with
-                        # where the @ sign is, I'm not sure if it really
-                        # counts)
                         if url == "<none>@<none>" or url == "<none>:<none>":
                             pass
                         elif "@sha256:" in url:
                             (repository, image_hash) = url.split("@")
+                            entries[repository].image_hash = image_hash
                         else:
-                            new_tag = url.split(":")[1]
-                            if new_tag not in tags:
-                                tags.append(new_tag)
+                            (repository, new_tag) = url.split(":")
+                            if new_tag not in entries[repository].tags:
+                                entries[repository].tags.append(new_tag)
+                        logger.debug(f"building entries: {entries}")
 
-                    if repository and image_hash:
-                        for t in tags:
-                            other_tags = list(tags)
+                    logger.debug(f"entries: {entries}")
+                    for repository, ie in entries.items():
+                        for t in ie.tags:
+                            other_tags = list(ie.tags)
                             other_tags.remove(t)
 
-                            node_images.append(
-                                CachedDockerImage(
-                                    image_url=f"{repository}:{t}",
-                                    image_hash=image_hash,
-                                    tags=other_tags,
+                            if ie.image_hash is None:
+                                raise KubernetesImageHashNotFound(
+                                    f"{repository} with tags {ie.tags}"
                                 )
-                            )
+                            else:
+                                node_images.append(
+                                    CachedDockerImage(
+                                        image_url=f"{repository}:{t}",
+                                        image_hash=ie.image_hash,
+                                        tags=other_tags,
+                                    )
+                                )
 
                 logger.debug(f"{n.metadata.name} images: {node_images}")
 

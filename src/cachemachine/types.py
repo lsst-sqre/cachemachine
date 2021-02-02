@@ -1,7 +1,7 @@
 """Helper types and errors for cachemachine."""
 
 from abc import ABC, abstractmethod
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from typing import Dict, List, Optional
 
 
@@ -13,6 +13,15 @@ class DockerRegistryError(Exception):
 
 class KubernetesDaemonsetNotFound(Exception):
     """Kubernetes daemonset does not exist."""
+
+    pass
+
+
+class KubernetesImageHashNotFound(Exception):
+    """Internal exception when looking through the cache.
+
+    This happens when an image hash entry isn't available,
+    but we always need the hash."""
 
     pass
 
@@ -94,6 +103,23 @@ class DockerImageList(list):
         This list can be easily converted to JSON.
         """
         return [asdict(i) for i in self]
+
+
+@dataclass
+class ImageEntry:
+    """Container for an entry in the cache from kubernetes.
+
+    Since we build this up over a loop, we might have one part first,
+    then the other part, so all of these are optional.  Call valid
+    when you think you are done to check that you have all the parts
+    you need.
+    """
+
+    """SHA256 image hash of the image entry."""
+    image_hash: Optional[str] = None
+
+    """List of tags the image is known by."""
+    tags: List[str] = field(default_factory=list)
 
 
 class KubernetesLabels(dict):

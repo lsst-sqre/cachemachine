@@ -67,9 +67,6 @@ class KubernetesMock:
         if name in self.daemonsets:
             raise Exception("Daemonset already exists")
 
-        assert image_url.startswith(
-            "registry.hub.docker.com/lsstsqre/sciplat-lab"
-        )
         (repository, tag) = image_url.split(":", 2)
         if tag not in self.data:
             raise Exception("Asking for a tag that isn't in the registry")
@@ -116,10 +113,19 @@ class KubernetesMock:
 
         for n in self.nodes:
             if labels.matches(n.metadata.labels):
+
+                # Look for the hash, even if it's tagged with a different
+                # repository.
                 already_pulled = False
                 for i in n.status.images:
-                    if image_url in i.names:
-                        already_pulled = True
+                    for url in i.names:
+                        if image_hash in url:
+                            already_pulled = True
+
+                            # If it was pulled with a different name, add that
+                            # name and hash url in here.
+                            if image_url not in i.names:
+                                i.names.extend([image_url, hash_url])
 
                 if not already_pulled:
                     n.status.images.append(

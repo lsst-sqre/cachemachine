@@ -17,6 +17,7 @@ import asyncio
 import structlog
 
 from cachemachine.app import create_app
+from cachemachine.types import KubernetesLabels
 
 from .docker_mock import DockerMock
 from .kubernetes_mock import KubernetesMock
@@ -39,7 +40,7 @@ async def test_pull(
         {
             "image_url": f"{HOST}/lsstsqre/sciplat-lab:recommended",
             "image_hash": "sha256:b0b7d97ff9d62ccd049",
-            "name": "Recommended",
+            "name": "Recommended (Release r21.0.0)",
         },
         {
             "image_url": f"{HOST}/lsstsqre/sciplat-lab:r21_0_0",
@@ -97,3 +98,31 @@ async def test_pull(
     # Delete cachemachine.
     response = await client.delete("/cachemachine/jupyter")
     assert response.status == 200
+
+
+async def test_fight_prepull(
+    aiohttp_client: TestClient,
+    docker_mock: DockerMock,
+    kubernetes_mock: KubernetesMock,
+) -> None:
+    """Now this shouldn't cause a problem...
+
+    Sometimes both the prepullers might be running.  While this may be
+    additional work it shouldn't cause a problem.  But we noticed some
+    issues with parsing images that the prepuller got to first in testing.
+    """
+
+    # First, let's use the kubernetes mock to pretend to pull some
+    # images like the prepuller would...
+    kubernetes_mock.daemonset_create(
+        "prepuller",
+        "docker.io/lsstsqre/sciplat-lab:prepuller_pulled_recommended",
+        "pull-secret",
+        KubernetesLabels({"k1": "v1"}),
+    )
+    kubernetes_mock.daemonset_finished("prepuller")
+    assert kubernetes_mock.daemonset_finished("prepuller")
+
+    # Now it should be in the cache.
+    # Run the normal test.
+    await test_pull(aiohttp_client, docker_mock, kubernetes_mock)

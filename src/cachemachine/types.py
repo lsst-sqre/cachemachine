@@ -17,15 +17,6 @@ class KubernetesDaemonsetNotFound(Exception):
     pass
 
 
-class KubernetesImageHashNotFound(Exception):
-    """Internal exception when looking through the cache.
-
-    This happens when an image hash entry isn't available,
-    but we always need the hash."""
-
-    pass
-
-
 class CacheMachineNotFoundError(Exception):
     """Cachemachine does not exist."""
 

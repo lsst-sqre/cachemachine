@@ -11,7 +11,6 @@ from cachemachine.types import (
     DockerImageList,
     ImageEntry,
     KubernetesDaemonsetNotFound,
-    KubernetesImageHashNotFound,
     KubernetesLabels,
     RepoMan,
 )
@@ -133,8 +132,8 @@ class CacheMachine:
                             other_tags.remove(t)
 
                             if ie.image_hash is None:
-                                raise KubernetesImageHashNotFound(
-                                    f"{repository} with tags {ie.tags}"
+                                logger.debug(
+                                    f"{repository} : {ie.tags} has no hash"
                                 )
                             else:
                                 node_images.append(

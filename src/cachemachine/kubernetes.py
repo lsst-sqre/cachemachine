@@ -6,14 +6,17 @@ from typing import Dict, List
 import structlog
 from kubernetes.client import (
     AppsV1Api,
+    V1Capabilities,
     V1Container,
     V1DaemonSet,
     V1DaemonSetSpec,
     V1LocalObjectReference,
     V1Node,
     V1ObjectMeta,
+    V1PodSecurityContext,
     V1PodSpec,
     V1PodTemplateSpec,
+    V1SecurityContext,
 )
 from kubernetes.client.api import core_v1_api
 from kubernetes.client.exceptions import ApiException
@@ -77,6 +80,11 @@ class KubernetesClient:
             name="cachemachine",
             image=image_url,
             command=["/bin/sh", "-c", "sleep 1200"],
+            security_context=V1SecurityContext(
+                allow_privilege_escalation=False,
+                capabilities=V1Capabilities(drop=["ALL"]),
+                read_only_root_filesystem=True,
+            ),
         )
 
         if pull_secret_name:
@@ -84,12 +92,21 @@ class KubernetesClient:
         else:
             pull_secret = []
 
+        # The pod cachemachine label is used to apply a NetworkPolicy.
         template = V1PodTemplateSpec(
-            metadata=V1ObjectMeta(labels={"app": name}),
+            metadata=V1ObjectMeta(
+                labels={"app": name, "cachemachine": "pull"}
+            ),
             spec=V1PodSpec(
+                automount_service_account_token=False,
                 containers=[container],
                 image_pull_secrets=pull_secret,
                 node_selector=labels,
+                security_context=V1PodSecurityContext(
+                    run_as_non_root=True,
+                    run_as_group=1000,
+                    run_as_user=1000,
+                ),
             ),
         )
 

@@ -79,6 +79,7 @@ class KubernetesClient:
         container = V1Container(
             name="cachemachine",
             image=image_url,
+            image_pull_policy="Always",
             command=["/bin/sh", "-c", "sleep 1200"],
             security_context=V1SecurityContext(
                 allow_privilege_escalation=False,

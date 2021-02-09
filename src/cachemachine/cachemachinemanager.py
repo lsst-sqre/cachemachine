@@ -4,14 +4,26 @@ __all__ = [
     "CacheMachineManager",
 ]
 
-from typing import Dict, List
+import json
+from pathlib import Path
+from typing import Any, Dict, List
 
+import structlog
 from aiohttp import web
 from aiojobs import create_scheduler
 from aiojobs._job import Job
 
 from cachemachine.cachemachine import CacheMachine
-from cachemachine.types import CacheMachineNotFoundError
+from cachemachine.rubinrepoman import RubinRepoMan
+from cachemachine.simplerepoman import SimpleRepoMan
+from cachemachine.types import (
+    CacheMachineNotFoundError,
+    KubernetesLabels,
+    RepoMan,
+    RepoManTypeNotFoundError,
+)
+
+logger = structlog.get_logger(__name__)
 
 
 class CacheMachineManager:
@@ -31,6 +43,14 @@ class CacheMachineManager:
         self._scheduler = await create_scheduler()
         self._jobs: Dict[str, Job] = {}
         self._machines: Dict[str, CacheMachine] = {}
+
+        try:
+            for p in Path("/etc/cachemachine").iterdir():
+                if p.is_file():
+                    logger.info(f"Automatically creating from file: {p}")
+                    await self.create(json.loads(p.read_text()))
+        except FileNotFoundError:
+            logger.info("No automatic cachemachines found.")
 
     async def cleanup(self, app: web.Application) -> None:
         """Cleanup CacheMachineManager.
@@ -56,11 +76,28 @@ class CacheMachineManager:
         """List all names of all the cachemachines."""
         return list(self._machines.keys())
 
-    async def manage(self, cm: CacheMachine) -> None:
+    async def create(self, body: Dict[str, Any]) -> CacheMachine:
         """Begin managing this cachemachine."""
-        await self.release(cm.name)
-        self._machines[cm.name] = cm
+        name = body["name"]
+        labels = KubernetesLabels(body["labels"])
+        repomen: List[RepoMan] = []
+
+        for r in body["repomen"]:
+            if r["type"] == "SimpleRepoMan":
+                repomen.append(SimpleRepoMan(r))
+            elif r["type"] == "RubinRepoMan":
+                repomen.append(RubinRepoMan(r))
+            else:
+                raise RepoManTypeNotFoundError(r["type"])
+
+        # Delete anything previously named the same thing.
+        await self.release(name)
+
+        # Start the new one.
+        cm = CacheMachine(name, labels, repomen)
+        self._machines[name] = cm
         await self._scheduler.spawn(cm.do_work())
+        return cm
 
     async def release(self, name: str) -> None:
         """Stop managing the cachemachine of this name."""

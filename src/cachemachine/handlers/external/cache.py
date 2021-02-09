@@ -10,20 +10,12 @@ __all__ = [
 
 import json
 from importlib import resources
-from typing import List
 
 from aiohttp import web
 from jsonschema import validate
 
-from cachemachine.cachemachine import CacheMachine
 from cachemachine.handlers import routes
-from cachemachine.rubinrepoman import RubinRepoMan
-from cachemachine.simplerepoman import SimpleRepoMan
-from cachemachine.types import (
-    CacheMachineNotFoundError,
-    KubernetesLabels,
-    RepoMan,
-)
+from cachemachine.types import CacheMachineNotFoundError
 
 
 @routes.get("/")
@@ -56,21 +48,8 @@ async def create_machine(request: web.Request) -> web.Response:
         ),
     )
 
-    name = body["name"]
-    labels = KubernetesLabels(body["labels"])
-    repomen: List[RepoMan] = []
-
-    for r in body["repomen"]:
-        if r["type"] == "SimpleRepoMan":
-            repomen.append(SimpleRepoMan(r))
-        elif r["type"] == "RubinRepoMan":
-            repomen.append(RubinRepoMan(r))
-        else:
-            return web.HTTPBadRequest()
-
-    cm = CacheMachine(name, labels, repomen)
     manager = request.config_dict["manager"]
-    await manager.manage(cm)
+    cm = await manager.create(body)
     return web.json_response(cm.dump())
 
 

@@ -66,7 +66,7 @@ class CacheMachine:
                         if not available:
                             images_to_cache.append(image)
 
-                if images_to_cache and not self.caching():
+                if not self.caching() and images_to_cache:
                     self.start_caching(images_to_cache[0].image_url)
 
                 self.available_images = available_images

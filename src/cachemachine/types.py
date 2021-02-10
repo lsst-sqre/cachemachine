@@ -23,6 +23,12 @@ class CacheMachineNotFoundError(Exception):
     pass
 
 
+class RepoManTypeNotFoundError(Exception):
+    """The type of Repo Man requested does not exist."""
+
+    pass
+
+
 @dataclass
 class CachedDockerImage:
     """Container for docker image that is already pulled."""

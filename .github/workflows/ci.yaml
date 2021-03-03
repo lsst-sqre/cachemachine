@@ -6,13 +6,18 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        python:
+          - 3.9
+
     steps:
       - uses: actions/checkout@v2
 
       - name: Set up Python
-        uses: actions/setup-python@v2.2.1
+        uses: actions/setup-python@v2
         with:
-          python-version: 3.9.1
+          python-version: ${{ matrix.python }}
 
       - name: Install tox
         run: pip install tox

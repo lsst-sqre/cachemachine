@@ -10,8 +10,7 @@ aiohttp
 aiodns
 aiojobs
 cchardet
-importlib_metadata
 click
 kubernetes
 jsonschema
-requests==2.25.0
+requests

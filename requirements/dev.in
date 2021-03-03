@@ -12,4 +12,4 @@ mypy
 pytest
 pytest-aiohttp
 aiohttp-devtools
-requests==2.25.0
+requests

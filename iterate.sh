@@ -3,7 +3,7 @@ if [ -f dev-chart.tgz ]
 then
   CHART=dev-chart.tgz
 else
-  CHART=cachemachine
+  CHART=lsst-sqre/cachemachine
 fi
 
 helm delete cachemachine-dev -n cachemachine-dev || true

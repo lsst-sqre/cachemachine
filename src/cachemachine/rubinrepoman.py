@@ -7,6 +7,7 @@ import structlog
 from cachemachine.dockerclient import DockerClient
 from cachemachine.types import (
     CachedDockerImage,
+    DesiredImageList,
     DockerImage,
     DockerImageList,
     RepoMan,
@@ -42,7 +43,7 @@ class RubinRepoMan(RepoMan):
 
     async def desired_images(
         self, common_cache: List[CachedDockerImage]
-    ) -> DockerImageList:
+    ) -> DesiredImageList:
         """Retrieve the list of images to pull, based on the registry.
 
         Parameters
@@ -62,7 +63,8 @@ class RubinRepoMan(RepoMan):
 
         logger.debug(f"Registry returned tags: {tags}")
 
-        images = DockerImageList()
+        pull_images = DockerImageList()
+        all_images = DockerImageList()
         dailies = DockerImageList()
         weeklies = DockerImageList()
         releases = DockerImageList()
@@ -97,54 +99,55 @@ class RubinRepoMan(RepoMan):
                 else:
                     name = "Recommended"
 
-                images.append(
+                pull_images.append(
                     DockerImage(
                         image_url=image_url,
                         image_hash=image_hash,
                         name=name,
                     )
                 )
-            elif t.startswith("d_"):
+            elif t.startswith("d_") and len(dailies) < self.num_dailies:
                 # Ex: d_2020_11_0
-                if len(dailies) < self.num_dailies:
-                    image_hash = await self.docker_client.get_image_hash(t)
-                    dailies.append(
-                        DockerImage(
-                            image_url=image_url,
-                            image_hash=image_hash,
-                            name=self._friendly_name(t),
-                        )
+                image_hash = await self.docker_client.get_image_hash(t)
+                dailies.append(
+                    DockerImage(
+                        image_url=image_url,
+                        image_hash=image_hash,
+                        name=self._friendly_name(t),
                     )
-            elif t.startswith("w_"):
-                # Ex: w_2020_41
-                if len(weeklies) < self.num_weeklies:
-                    image_hash = await self.docker_client.get_image_hash(t)
-                    weeklies.append(
-                        DockerImage(
-                            image_url=image_url,
-                            image_hash=image_hash,
-                            name=self._friendly_name(t),
-                        )
+                )
+            elif t.startswith("w_") and len(weeklies) < self.num_weeklies:
+                image_hash = await self.docker_client.get_image_hash(t)
+                weeklies.append(
+                    DockerImage(
+                        image_url=image_url,
+                        image_hash=image_hash,
+                        name=self._friendly_name(t),
                     )
-            elif t.startswith("r"):
-                # Ex: r20_0_0, r20_0_0_rc1
-                if len(releases) < self.num_releases:
-                    image_hash = await self.docker_client.get_image_hash(t)
-                    releases.append(
-                        DockerImage(
-                            image_url=image_url,
-                            image_hash=image_hash,
-                            name=self._friendly_name(t),
-                        )
+                )
+            elif t.startswith("r") and len(releases) < self.num_releases:
+                image_hash = await self.docker_client.get_image_hash(t)
+                releases.append(
+                    DockerImage(
+                        image_url=image_url,
+                        image_hash=image_hash,
+                        name=self._friendly_name(t),
                     )
+                )
             else:
-                logger.debug(f"Not processing {t}")
+                all_images.append(
+                    DockerImage(
+                        image_url=image_url,
+                        image_hash=None,
+                        name=t,
+                    )
+                )
 
-        images.extend(releases)
-        images.extend(weeklies)
-        images.extend(dailies)
-        logger.info(f"Returning {images}")
-        return images
+        pull_images.extend(releases)
+        pull_images.extend(weeklies)
+        pull_images.extend(dailies)
+        logger.info(f"Returning {pull_images}")
+        return DesiredImageList(pull_images, all_images)
 
     def _friendly_name(self, tag: str) -> str:
         """Generate the friendly name of an image based on its tag.

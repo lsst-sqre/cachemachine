@@ -134,14 +134,14 @@ class RubinRepoMan(RepoMan):
                         name=self._friendly_name(t),
                     )
                 )
-            else:
-                all_images.append(
-                    DockerImage(
-                        image_url=image_url,
-                        image_hash=None,
-                        name=t,
-                    )
+
+            all_images.append(
+                DockerImage(
+                    image_url=image_url,
+                    image_hash=None,
+                    name=t,
                 )
+            )
 
         pull_images.extend(releases)
         pull_images.extend(weeklies)

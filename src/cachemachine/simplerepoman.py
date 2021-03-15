@@ -3,7 +3,12 @@ from typing import Any, Dict, List
 
 import structlog
 
-from cachemachine.types import CachedDockerImage, DockerImageList, RepoMan
+from cachemachine.types import (
+    CachedDockerImage,
+    DesiredImageList,
+    DockerImageList,
+    RepoMan,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -25,7 +30,7 @@ class SimpleRepoMan(RepoMan):
 
     async def desired_images(
         self, common_cache: List[CachedDockerImage]
-    ) -> DockerImageList:
+    ) -> DesiredImageList:
         """Return the static list of desired images.
 
         Parameters
@@ -36,4 +41,4 @@ class SimpleRepoMan(RepoMan):
         -------
         List of images to cache, which come directly from the JSON post body.
         """
-        return self._images
+        return DesiredImageList(self._images, DockerImageList())

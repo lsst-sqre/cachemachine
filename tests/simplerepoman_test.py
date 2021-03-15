@@ -26,7 +26,9 @@ async def test_simplerepoman() -> None:
     common_cache: List[CachedDockerImage] = []
 
     r = SimpleRepoMan(body)
-    di = await r.desired_images(common_cache)
+    desired_images = await r.desired_images(common_cache)
+    di = desired_images.desired_images
+    assert len(desired_images.all_images) == 0
     assert len(di) == 1
     assert di[0].image_url == "lsstsqre/sciplat-lab:recommended"
     assert di[0].name == "Recommended"

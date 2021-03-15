@@ -86,7 +86,34 @@ async def available_images(request: web.Request) -> web.Response:
 
     try:
         cm = manager.get(name)
-        return web.json_response(cm.available_images.dump())
+        resp = {
+            "images": cm.available_images.dump(),
+            "all": cm.all_images.dump(),
+        }
+        return web.json_response(resp)
+    except CacheMachineNotFoundError:
+        raise web.HTTPNotFound()
+
+
+@routes.get("/{name}/desired")
+async def desired_images(request: web.Request) -> web.Response:
+    """GET /cachemachine/{name}/desired
+
+    Get the desired list of images, which comes from the RepoMan.
+    This contains two lists, one that has the images that will
+    be attempted to be pulled, and the other being the rest of
+    the images that should be displayed.
+    """
+    name = request.match_info["name"]
+    manager = request.config_dict["manager"]
+
+    try:
+        cm = manager.get(name)
+        resp = {
+            "images": cm.desired_images.dump(),
+            "all": cm.all_images.dump(),
+        }
+        return web.json_response(resp)
     except CacheMachineNotFoundError:
         raise web.HTTPNotFound()
 

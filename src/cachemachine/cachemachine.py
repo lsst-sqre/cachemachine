@@ -29,6 +29,7 @@ class CacheMachine:
         labels: KubernetesLabels,
         repomen: Sequence[RepoMan],
     ):
+        self.all_images = DockerImageList()
         self.available_images = DockerImageList()
         self.common_cache = DockerImageList()
         self.desired_images = DockerImageList()
@@ -44,6 +45,7 @@ class CacheMachine:
     async def do_work(self) -> None:
         while True:
             try:
+                all_images = DockerImageList()
                 available_images = DockerImageList()
                 desired_images = DockerImageList()
                 images_to_cache = DockerImageList()
@@ -51,7 +53,9 @@ class CacheMachine:
                 self.inspect_node_caches()
 
                 for r in self.repomen:
-                    for image in await r.desired_images(self.common_cache):
+                    dsi = await r.desired_images(self.common_cache)
+
+                    for image in dsi.desired_images:
                         desired_images.append(image)
 
                         available = False
@@ -66,9 +70,12 @@ class CacheMachine:
                         if not available:
                             images_to_cache.append(image)
 
+                    all_images.extend(dsi.all_images)
+
                 if not self.caching() and images_to_cache:
                     self.start_caching(images_to_cache[0].image_url)
 
+                self.all_images = all_images
                 self.available_images = available_images
                 self.desired_images = desired_images
                 self.images_to_cache = images_to_cache
@@ -200,6 +207,7 @@ class CacheMachine:
             "name": self.name,
             "labels": self.labels,
             "common_cache": self.common_cache.dump(),
+            "all_images": self.all_images.dump(),
             "available_images": self.available_images.dump(),
             "desired_images": self.desired_images.dump(),
             "images_to_cache": self.images_to_cache.dump(),

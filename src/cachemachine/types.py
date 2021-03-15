@@ -103,6 +103,22 @@ class DockerImageList(list):
 
 
 @dataclass
+class DesiredImageList:
+    """Container for the results of a desired_image call.
+
+    Contains two lists, one the images to pull, and the other
+    containing all the other images that could be pulled, but
+    won't be.
+    """
+
+    """Images that should be pulled."""
+    desired_images: DockerImageList
+
+    """Images that should end up in a sublist, but not be pulled."""
+    all_images: DockerImageList
+
+
+@dataclass
 class ImageEntry:
     """Container for an entry in the cache from kubernetes.
 
@@ -142,8 +158,21 @@ class KubernetesLabels(dict):
 
 
 class RepoMan(ABC):
+    """Abstract class for a strategy pattern to determine images."""
+
     @abstractmethod
     async def desired_images(
         self, common_cache: List[CachedDockerImage]
-    ) -> DockerImageList:
+    ) -> DesiredImageList:
+        """Determine the list of images to pull.
+
+        Parameters
+        ----------
+        common_cache: The current common image cache on all the nodes.
+
+        Returns
+        -------
+        A DesiredImages object that contains the list of images to
+        pull, as well as other images that could be pulled.
+        """
         pass

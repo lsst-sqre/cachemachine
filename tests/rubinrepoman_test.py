@@ -80,9 +80,9 @@ async def test_rubinrepoman_tag_picking(docker_mock: DockerMock) -> None:
     assert di[1].image_url == f"{HOST}/lsstsqre/sciplat-lab:r21_0_0"
     assert di[1].name == "Release r21.0.0"
     assert di[2].image_url == f"{HOST}/lsstsqre/sciplat-lab:w_2021_03"
-    assert di[2].name == "Weekly 03"
+    assert di[2].name == "Weekly 2021_03"
     assert di[3].image_url == f"{HOST}/lsstsqre/sciplat-lab:d_2021_01_13"
-    assert di[3].name == "Daily 01/13"
+    assert di[3].name == "Daily 2021_01_13"
 
     assert len(ai) == 7
     assert ai[0].image_url == f"{HOST}/lsstsqre/sciplat-lab:w_2021_03"
@@ -131,6 +131,6 @@ async def test_rubinrepoman_tag_picking(docker_mock: DockerMock) -> None:
     assert di[1].image_url == f"{HOST}/lsstsqre/sciplat-lab:r21_0_0"
     assert di[1].name == "Release r21.0.0"
     assert di[2].image_url == f"{HOST}/lsstsqre/sciplat-lab:w_2021_03"
-    assert di[2].name == "Weekly 03"
+    assert di[2].name == "Weekly 2021_03"
     assert di[3].image_url == f"{HOST}/lsstsqre/sciplat-lab:d_2021_01_13"
-    assert di[3].name == "Daily 01/13"
+    assert di[3].name == "Daily 2021_01_13"

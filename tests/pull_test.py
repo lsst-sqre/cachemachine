@@ -50,12 +50,12 @@ async def test_pull(
         {
             "image_url": f"{HOST}/lsstsqre/sciplat-lab:w_2021_03",
             "image_hash": "sha256:bb16e5ea71bd7139779",
-            "name": "Weekly 03",
+            "name": "Weekly 2021_03",
         },
         {
             "image_url": f"{HOST}/lsstsqre/sciplat-lab:d_2021_01_13",
             "image_hash": "sha256:343b17341d0e961472",
-            "name": "Daily 01/13",
+            "name": "Daily 2021_01_13",
         },
     ]
 

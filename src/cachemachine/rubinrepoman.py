@@ -164,9 +164,9 @@ class RubinRepoMan(RepoMan):
         tag_parts = tag.split("_")
 
         if tag.startswith("d_"):
-            return f"Daily {tag_parts[2]}/{tag_parts[3]}"
+            return f"Daily {tag_parts[1]}_{tag_parts[2]}_{tag_parts[3]}"
         elif tag.startswith("w_"):
-            return f"Weekly {tag_parts[2]}"
+            return f"Weekly {tag_parts[1]}_{tag_parts[2]}"
         elif tag.startswith("r"):
             return "Release " + ".".join(tag_parts)
         else:

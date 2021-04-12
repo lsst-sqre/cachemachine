@@ -17,6 +17,17 @@ DOCKER_REGISTRY_HOST = "registry.hub.docker.com"
 logger = structlog.get_logger(__name__)
 
 
+def is_real_release(t: str) -> bool:
+    """We want to be able to reject release RC versions (e.g. r_22_0_0_rc1).
+    Our heuristic here is that if the last tag component contains only digits
+    then it is a release version; otherwise it is not.
+    """
+    tag_parts = t.split("_")
+    if t.startswith("r") and tag_parts[-1].isdigit():
+        return True
+    return False
+
+
 class RubinRepoMan(RepoMan):
     """This class encapsulates the business logic of picking images based on
     the format of tags created by Rubin Observatory."""
@@ -125,7 +136,7 @@ class RubinRepoMan(RepoMan):
                         name=self._friendly_name(t),
                     )
                 )
-            elif t.startswith("r") and len(releases) < self.num_releases:
+            elif is_real_release(t) and len(releases) < self.num_releases:
                 image_hash = await self.docker_client.get_image_hash(t)
                 releases.append(
                     DockerImage(

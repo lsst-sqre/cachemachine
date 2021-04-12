@@ -84,24 +84,26 @@ async def test_rubinrepoman_tag_picking(docker_mock: DockerMock) -> None:
     assert di[3].image_url == f"{HOST}/lsstsqre/sciplat-lab:d_2021_01_13"
     assert di[3].name == "Daily 2021_01_13"
 
-    assert len(ai) == 7
+    assert len(ai) == 8
     assert ai[0].image_url == f"{HOST}/lsstsqre/sciplat-lab:w_2021_03"
     assert ai[0].name == "w_2021_03"
     assert ai[1].image_url == f"{HOST}/lsstsqre/sciplat-lab:w_2021_02"
     assert ai[1].name == "w_2021_02"
     assert ai[2].image_url == f"{HOST}/lsstsqre/sciplat-lab:recommended"
     assert ai[2].name == "recommended"
-    assert ai[3].image_url == f"{HOST}/lsstsqre/sciplat-lab:r21_0_0"
-    assert ai[3].name == "r21_0_0"
+    assert ai[3].image_url == f"{HOST}/lsstsqre/sciplat-lab:r22_0_0_rc1"
+    assert ai[3].name == "r22_0_0_rc1"
+    assert ai[4].image_url == f"{HOST}/lsstsqre/sciplat-lab:r21_0_0"
+    assert ai[4].name == "r21_0_0"
     assert (
-        ai[4].image_url
+        ai[5].image_url
         == f"{HOST}/lsstsqre/sciplat-lab:prepuller_pulled_recommended"
     )
-    assert ai[4].name == "prepuller_pulled_recommended"
-    assert ai[5].image_url == f"{HOST}/lsstsqre/sciplat-lab:d_2021_01_13"
-    assert ai[5].name == "d_2021_01_13"
-    assert ai[6].image_url == f"{HOST}/lsstsqre/sciplat-lab:d_2021_01_12"
-    assert ai[6].name == "d_2021_01_12"
+    assert ai[5].name == "prepuller_pulled_recommended"
+    assert ai[6].image_url == f"{HOST}/lsstsqre/sciplat-lab:d_2021_01_13"
+    assert ai[6].name == "d_2021_01_13"
+    assert ai[7].image_url == f"{HOST}/lsstsqre/sciplat-lab:d_2021_01_12"
+    assert ai[7].name == "d_2021_01_12"
 
     # Now let's pretend we've got the images in the cache.
     # We should be able to notice the other tags that
@@ -124,7 +126,10 @@ async def test_rubinrepoman_tag_picking(docker_mock: DockerMock) -> None:
 
     desired_images = await r.desired_images(common_cache)
     di = desired_images.desired_images
-    assert len(desired_images.all_images) == 7
+    # Note that this also checks rejection of the RC release image, since
+    # it occurs prior to r21 in the list, but is not selected as the
+    # release image.
+    assert len(desired_images.all_images) == 8
     assert len(di) == 4
     assert di[0].image_url == f"{HOST}/lsstsqre/sciplat-lab:recommended"
     assert di[0].name == "Recommended (Release r21.0.0)"

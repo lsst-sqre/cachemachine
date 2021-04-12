@@ -125,7 +125,9 @@ class RubinRepoMan(RepoMan):
                         name=self._friendly_name(t),
                     )
                 )
-            elif t.startswith("r") and len(releases) < self.num_releases:
+            elif (
+                self._is_real_release(t) and len(releases) < self.num_releases
+            ):
                 image_hash = await self.docker_client.get_image_hash(t)
                 releases.append(
                     DockerImage(
@@ -172,3 +174,15 @@ class RubinRepoMan(RepoMan):
         else:
             # Should never reach here...
             raise Exception(f"Unexpected tag name {tag}")
+
+    def _is_real_release(self, tag: str) -> bool:
+        """We want to be able to reject release RC versions
+        (e.g. r_22_0_0_rc1).
+
+        Our heuristic here is that if the last tag component contains only
+        digits then it is a release version; otherwise it is not.
+        """
+        tag_parts = tag.split("_")
+        if tag.startswith("r") and tag_parts[-1].isdigit():
+            return True
+        return False

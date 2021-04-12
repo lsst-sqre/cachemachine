@@ -59,6 +59,7 @@ doesn't matter."""
 mock_registry = {
     "prepuller_pulled_recommended": "sha256:b0b7d97ff9d62ccd049",
     "recommended": "sha256:b0b7d97ff9d62ccd049",
+    "r22_0_0_rc1": "sha256:0000deadbeeffaceffff",
     "r21_0_0": "sha256:b0b7d97ff9d62ccd049",
     "w_2021_03": "sha256:bb16e5ea71bd7139779",
     "w_2021_02": "sha256:bad6e5ea71bd7139779",

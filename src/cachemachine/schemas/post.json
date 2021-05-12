@@ -21,6 +21,15 @@
                     "num_dailies": 3
                 },
                 {
+                    "type": "SALCycleRepoMan",
+                    "repo": "lsstts/sal-sciplat-lab",
+                    "recommended_tag": "recommended",
+                    "num_releases": 1,
+                    "num_weeklies": 2,
+                    "num_dailies": 3,
+                    "cycle": 20
+                },
+                {
                     "type": "SimpleRepoMan",
                     "images": [
                         {
@@ -76,6 +85,15 @@
                         "num_releases": 1,
                         "num_weeklies": 2,
                         "num_dailies": 3
+                    },
+                    {
+                        "type": "SALCycleRepoMan",
+                        "repo": "lsstsqre/sciplat-lab",
+                        "recommended_tag": "recommended",
+                        "num_releases": 1,
+                        "num_weeklies": 2,
+                        "num_dailies": 3,
+                        "cycle": 20
                     },
                     {
                         "type": "SimpleRepoMan",
@@ -196,6 +214,119 @@
                     {
                         "$id": "#/properties/repomen/items/anyOf/1",
                         "type": "object",
+                        "title": "SALCycleRubinRepoMan",
+                        "description": "Determine images to pull based on Rubin Observatory tag format.",
+                        "default": {},
+                        "examples": [
+                            {
+                                "type": "SALCycleRepoMan",
+                                "repo": "lsstts/salsciplat-lab",
+                                "recommended_tag": "recommended",
+                                "num_releases": 1,
+                                "num_weeklies": 2,
+                                "num_dailies": 3,
+                                "cycle": 20
+                            }
+                        ],
+                        "required": [
+                            "type",
+                            "repo",
+                            "num_releases",
+                            "num_weeklies",
+                            "num_dailies"
+                        ],
+                        "optional": [
+                            "recommended_tag",
+                            "registry_url",
+                            "cycle"
+                        ],
+                        "properties": {
+                            "type": {
+                                "$id": "#/properties/repomen/items/anyOf/1/properties/type",
+                                "type": "string",
+                                "title": "Repoman Type Name",
+                                "description": "Use the SALCycleRepoMan strategy to determine images.",
+                                "default": "",
+                                "examples": [
+                                    "SALCycleRepoMan"
+                                ]
+                            },
+                            "registry_url": {
+                                "$id": "#/properties/repomen/items/anyOf/1/properties/registry_url",
+                                "type": "string",
+                                "title": "Docker image registry URL",
+                                "description": "Base Docker Registry URL to query for image list",
+                                "default": "",
+                                "examples": [
+                                    "ts-dockerhub.lsst.org"
+                                ]
+                            },
+                            "repo": {
+                                "$id": "#/properties/repomen/items/anyOf/1/properties/repo",
+                                "type": "string",
+                                "title": "Docker image repository URL or image name",
+                                "description": "Docker repository to query.",
+                                "default": "",
+                                "examples": [
+                                    "lsstts/sal-sciplat-lab"
+                                ]
+                            },
+                            "recommended_tag": {
+                                "$id": "#/properties/repomen/items/anyOf/1/properties/recommended_tag",
+                                "type": "string",
+                                "title": "Recommended docker tag",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "recommended"
+                                ]
+                            },
+                            "num_releases": {
+                                "$id": "#/properties/repomen/items/anyOf/1/properties/num_releases",
+                                "type": "integer",
+                                "title": "Number of Releases",
+                                "description": "Number of release images to pull.",
+                                "default": 0,
+                                "examples": [
+                                    1
+                                ]
+                            },
+                            "num_weeklies": {
+                                "$id": "#/properties/repomen/items/anyOf/1/properties/num_weeklies",
+                                "type": "integer",
+                                "title": "Number of Weeklies",
+                                "description": "Number of weekly images to pull.",
+                                "default": 0,
+                                "examples": [
+                                    2
+                                ]
+                            },
+                            "num_dailies": {
+                                "$id": "#/properties/repomen/items/anyOf/1/properties/num_dailies",
+                                "type": "integer",
+                                "title": "Number of Dailies",
+                                "description": "Number of daily images to pull.",
+                                "default": 0,
+                                "examples": [
+                                    3
+                                ]
+                            },
+                            "cycle": {
+                                "$id": "#/properties/repomen/items/anyOf/1/properties/cycle",
+                                "type": "integer",
+                                "title": "Cycle",
+                                "description": "SAL XML Cycle Number.",
+                                "default": 0,
+                                "examples": [
+                                    20
+                                ]
+                            }
+                        },
+                        "additionalProperties": false
+                    },
+                    {
+                        "$id": "#/properties/repomen/items/anyOf/2",
+                        "type": "object",
                         "title": "Simple Repository Manager",
                         "description": "Static list of images to pull.",
                         "default": {},
@@ -216,7 +347,7 @@
                         ],
                         "properties": {
                             "type": {
-                                "$id": "#/properties/repomen/items/anyOf/1/properties/type",
+                                "$id": "#/properties/repomen/items/anyOf/2/properties/type",
                                 "type": "string",
                                 "title": "Simple Repository Type",
                                 "description": "Use the simple repository manager type.",
@@ -226,7 +357,7 @@
                                 ]
                             },
                             "images": {
-                                "$id": "#/properties/repomen/items/anyOf/1/properties/images",
+                                "$id": "#/properties/repomen/items/anyOf/2/properties/images",
                                 "type": "array",
                                 "title": "Image list",
                                 "description": "Static list of images to pull and names for those images.",
@@ -241,10 +372,10 @@
                                 ],
                                 "additionalItems": true,
                                 "items": {
-                                    "$id": "#/properties/repomen/items/anyOf/1/properties/images/items",
+                                    "$id": "#/properties/repomen/items/anyOf/2/properties/images/items",
                                     "anyOf": [
                                         {
-                                            "$id": "#/properties/repomen/items/anyOf/1/properties/images/items/anyOf/0",
+                                            "$id": "#/properties/repomen/items/anyOf/2/properties/images/items/anyOf/0",
                                             "type": "object",
                                             "title": "The first anyOf schema",
                                             "description": "An explanation about the purpose of this instance.",
@@ -261,7 +392,7 @@
                                             ],
                                             "properties": {
                                                 "name": {
-                                                    "$id": "#/properties/repomen/items/anyOf/1/properties/images/items/anyOf/0/properties/name",
+                                                    "$id": "#/properties/repomen/items/anyOf/2/properties/images/items/anyOf/0/properties/name",
                                                     "type": "string",
                                                     "title": "Display name to use for this image",
                                                     "description": "Friendly display name to show the user to refer to this image.",
@@ -271,7 +402,7 @@
                                                     ]
                                                 },
                                                 "image_url": {
-                                                    "$id": "#/properties/repomen/items/anyOf/1/properties/images/items/anyOf/0/properties/image_url",
+                                                    "$id": "#/properties/repomen/items/anyOf/2/properties/images/items/anyOf/0/properties/image_url",
                                                     "type": "string",
                                                     "title": "Name or URL of docker image",
                                                     "description": "Name or URL of the image to pull.",

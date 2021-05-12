@@ -14,3 +14,5 @@ click
 kubernetes
 jsonschema
 requests
+docker-image-py
+semver

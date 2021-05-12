@@ -1,10 +1,11 @@
 """Repository Manager to manage Rubin Observatory images."""
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import structlog
 
 from cachemachine.dockerclient import DockerClient
+from cachemachine.rubinimageinfo import RubinImageInfo, RubinImageType
 from cachemachine.types import (
     CachedDockerImage,
     DesiredImageList,
@@ -65,27 +66,38 @@ class RubinRepoMan(RepoMan):
 
         pull_images = DockerImageList()
         all_images = DockerImageList()
-        dailies = DockerImageList()
-        weeklies = DockerImageList()
-        releases = DockerImageList()
 
-        for t in tags:
-            logger.debug(f"Checking tag: {t}")
-
-            image_url = f"{self.registry_url}/{self.repo}:{t}"
-
-            if t == self.recommended_tag:
-                # Logic for generating the name of the recommended tag here.
-                aka: List[str] = []
-
+        img_info_list: List[RubinImageInfo] = []
+        img_info_list = [
+            RubinImageInfo.from_reference(
+                f"{self.registry_url}/{self.repo}:{t}",
+                recommended_tag=self.recommended_tag,
+            )
+            for t in tags
+        ]
+        # Categorize images by type and then sort each type
+        imgmap: Dict[str, List[RubinImageInfo]] = {
+            "daily": [],
+            "weekly": [],
+            "release": [],
+        }
+        for img in img_info_list:
+            logger.debug(f"Checking image: {img.reference}")
+            image_url = img.reference
+            img_type = img.image_type
+            if not self._allow_image(img):
+                # Pretend it's not there at all
+                continue
+            if img.image_type == RubinImageType.RECOMMENDED:
+                # This is the complicated one.
                 # Get the hash of the recommended image.
-                image_hash = await self.docker_client.get_image_hash(t)
-
+                image_hash = await self.docker_client.get_image_hash(img.tag)
                 # Find all other images in the common cache that have the
                 # same image hash (which means the same image data), and
                 # combine the list of known tags into one.  All of these
                 # are valid tags that point to the same image, but only
                 # exist if the image was pulled by that tag.
+                aka: List[str] = []
                 for i in common_cache:
                     if i.image_hash == image_hash:
                         for x in i.tags:
@@ -93,96 +105,93 @@ class RubinRepoMan(RepoMan):
                                 aka.append(x)
 
                 # Generate the name based on what other tags it is known by.
+                more_name_str = ""
+                more_names = []
                 if aka:
-                    friendly_names = [self._friendly_name(a) for a in aka]
-                    name = f"Recommended ({','.join(friendly_names)})"
-                else:
-                    name = "Recommended"
-
+                    for alias in aka:
+                        akaimg = RubinImageInfo.from_reference(
+                            f"{self.registry_url}/{self.repo}:{alias}",
+                            recommended_tag=self.recommended_tag,
+                            digest=image_hash,
+                        )
+                        more_names.append(akaimg.display_name)
+                if more_names:
+                    more_name_str = " (" + ", ".join(more_names) + ")"
+                name = f"{img.display_name}{more_name_str}"
+                h_image = RubinImageInfo.from_reference(
+                    img.reference,
+                    recommended_tag=self.recommended_tag,
+                    digest=image_hash,
+                )
                 pull_images.append(
-                    DockerImage(
-                        image_url=image_url,
-                        image_hash=image_hash,
-                        name=name,
+                    self._docker_image_from_image_info(
+                        h_image, override_name=name
                     )
                 )
-            elif t.startswith("d_") and len(dailies) < self.num_dailies:
-                # Ex: d_2020_11_0
-                image_hash = await self.docker_client.get_image_hash(t)
-                dailies.append(
-                    DockerImage(
-                        image_url=image_url,
-                        image_hash=image_hash,
-                        name=self._friendly_name(t),
+            elif img_type == RubinImageType.DAILY:
+                imgmap["daily"].append(
+                    RubinImageInfo.from_reference(
+                        image_url, recommended_tag=self.recommended_tag
                     )
                 )
-            elif t.startswith("w_") and len(weeklies) < self.num_weeklies:
-                image_hash = await self.docker_client.get_image_hash(t)
-                weeklies.append(
-                    DockerImage(
-                        image_url=image_url,
-                        image_hash=image_hash,
-                        name=self._friendly_name(t),
+            elif img_type == RubinImageType.WEEKLY:
+                imgmap["weekly"].append(
+                    RubinImageInfo.from_reference(
+                        image_url, recommended_tag=self.recommended_tag
                     )
                 )
-            elif (
-                self._is_real_release(t) and len(releases) < self.num_releases
-            ):
-                image_hash = await self.docker_client.get_image_hash(t)
-                releases.append(
-                    DockerImage(
-                        image_url=image_url,
-                        image_hash=image_hash,
-                        name=self._friendly_name(t),
+            elif img_type == RubinImageType.RELEASE:
+                imgmap["release"].append(
+                    RubinImageInfo.from_reference(
+                        image_url, recommended_tag=self.recommended_tag
                     )
                 )
-
             all_images.append(
-                DockerImage(
-                    image_url=image_url,
-                    image_hash=None,
-                    name=t,
-                )
+                self._docker_image_from_image_info(img, override_name=img.tag)
             )
 
-        pull_images.extend(releases)
-        pull_images.extend(weeklies)
-        pull_images.extend(dailies)
+        # At this point, "all_images" is populated.  pull_images has
+        #  "recommended" and its aliases.  Both of these are modulo whatever
+        #  was filtered out in _allow_image (which is nothing for this class,
+        #  but might be overridden in a subclass).
+
+        # Now we're going to sort each of the daily/weekly/release lists,
+        #  and take the requested number of them.  For each of those we will
+        #  get the hash (this is why we're processing the list twice: that's
+        #  an expensive operation, and we only want to bother getting the
+        #  digest for the prepulled images).  Sorting reverse=True will put
+        #  the most recent ones (with the highest semvers) on top.
+
+        for k, v in {
+            "release": self.num_releases,
+            "weekly": self.num_weeklies,
+            "daily": self.num_dailies,
+        }.items():
+            inputlist = sorted(imgmap[k][:v], reverse=True)
+            for img in inputlist:
+                image_hash = await self.docker_client.get_image_hash(img.tag)
+                h_image = RubinImageInfo.from_reference(
+                    img.reference,
+                    recommended_tag=self.recommended_tag,
+                    digest=image_hash,
+                )
+                pull_images.append(self._docker_image_from_image_info(h_image))
         logger.info(f"Returning {pull_images}")
         return DesiredImageList(pull_images, all_images)
 
-    def _friendly_name(self, tag: str) -> str:
-        """Generate the friendly name of an image based on its tag.
+    def _docker_image_from_image_info(
+        self, img: RubinImageInfo, override_name: Optional[str] = None
+    ) -> DockerImage:
+        name = img.display_name
+        if override_name:
+            name = override_name
+        return DockerImage(
+            image_url=img.reference, image_hash=img.digest, name=name
+        )
 
-        Parameters
-        ----------
-        tag: tag to generate the friendly name of.  Only works on
-          release, weekly, and daily tags.
-
-        Returns
-        -------
-        The friendly name of the tag.
-        """
-        tag_parts = tag.split("_")
-
-        if tag.startswith("d_"):
-            return f"Daily {tag_parts[1]}_{tag_parts[2]}_{tag_parts[3]}"
-        elif tag.startswith("w_"):
-            return f"Weekly {tag_parts[1]}_{tag_parts[2]}"
-        elif tag.startswith("r"):
-            return "Release " + ".".join(tag_parts)
-        else:
-            # Should never reach here...
-            raise Exception(f"Unexpected tag name {tag}")
-
-    def _is_real_release(self, tag: str) -> bool:
-        """We want to be able to reject release RC versions
-        (e.g. r_22_0_0_rc1).
-
-        Our heuristic here is that if the last tag component contains only
-        digits then it is a release version; otherwise it is not.
-        """
-        tag_parts = tag.split("_")
-        if tag.startswith("r") and tag_parts[-1].isdigit():
-            return True
-        return False
+    def _allow_image(self, img: RubinImageInfo) -> bool:
+        """Override this in a subclass to filter out some images.
+        Return False if you do not want the image.  You don't have the
+        digest value here, necessarily, so you probably don't want to
+        discriminate based on the digest."""
+        return True

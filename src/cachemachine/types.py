@@ -29,6 +29,18 @@ class RepoManTypeNotFoundError(Exception):
     pass
 
 
+class MalformedTagError(Exception):
+    """Tag does not meet RubinImageInfo requirements."""
+
+    pass
+
+
+class IncomparableImagesError(Exception):
+    """Images or their types are different and thus cannot be compared."""
+
+    pass
+
+
 @dataclass
 class CachedDockerImage:
     """Container for docker image that is already pulled."""

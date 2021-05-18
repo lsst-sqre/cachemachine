@@ -13,6 +13,7 @@ from kubernetes.client import (
     V1LocalObjectReference,
     V1Node,
     V1ObjectMeta,
+    V1OwnerReference,
     V1PodSecurityContext,
     V1PodSpec,
     V1PodTemplateSpec,
@@ -112,7 +113,8 @@ class KubernetesClient:
 
         template = V1PodTemplateSpec(
             metadata=V1ObjectMeta(
-                annotations=ds_annotations, labels=ds_labels
+                annotations=ds_annotations,
+                labels=ds_labels,
             ),
             spec=V1PodSpec(
                 automount_service_account_token=False,
@@ -129,7 +131,17 @@ class KubernetesClient:
 
         ds = V1DaemonSet(
             metadata=V1ObjectMeta(
-                annotations=ds_annotations, name=name, labels=ds_labels
+                annotations=ds_annotations,
+                name=name,
+                labels=ds_labels,
+                owner_references=[
+                    V1OwnerReference(
+                        api_version="v1",
+                        kind="Pod",
+                        name=self._read_pod_info("name"),
+                        uid=self._read_pod_info("uid"),
+                    ),
+                ],
             ),
             spec=V1DaemonSetSpec(
                 template=template,
@@ -182,6 +194,22 @@ class KubernetesClient:
             logger.exception(f"Exception checking on daemonset {name}")
             raise
 
+    def _read_pod_info(self, filename: str) -> str:
+        """Read the file containing some information about our current pod.
+
+        This data is provided as files mounted into the container by
+        kubernetes.
+
+        Parameters
+        ----------
+        filename: filename to read in /etc/podinfo.  The list is
+          available in the helm chart.
+
+        Returns
+        -------
+        Contents of that file."""
+        return Path("/etc/podinfo/", filename).read_text()
+
     def _read_current_pod_info(self, info_type: str) -> Dict[str, str]:
         """Load kubernetes downward API information about our pod.
 
@@ -198,12 +226,11 @@ class KubernetesClient:
         can create it as a set of labels or annotations.
         """
         info = {}
-        with Path("/etc/podinfo/", info_type).open() as f:
-            # Format is k="v"
-            # Who knows why it quotes the value.
-            # Quotes aren't allowed in labels or annotations.
-            for line in f.read().splitlines():
-                (k, v) = line.replace('"', "").split("=", 1)
-                info[k] = v
+        # Format is k="v"
+        # Who knows why it quotes the value.
+        # Quotes aren't allowed in labels or annotations.
+        for line in self._read_pod_info(info_type).splitlines():
+            (k, v) = line.replace('"', "").split("=", 1)
+            info[k] = v
 
         return info

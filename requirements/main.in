@@ -14,3 +14,4 @@ click
 kubernetes
 jsonschema
 requests
+semver

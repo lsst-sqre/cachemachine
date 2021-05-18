@@ -48,9 +48,9 @@ async def test_pull(
             "name": "Release r21.0.0",
         },
         {
-            "image_url": f"{HOST}/lsstsqre/sciplat-lab:w_2021_03",
-            "image_hash": "sha256:bb16e5ea71bd7139779",
-            "name": "Weekly 2021_03",
+            "image_url": f"{HOST}/lsstsqre/sciplat-lab:w_2021_22",
+            "image_hash": "sha256:3fc76a592a063b9532f",
+            "name": "Weekly 2021_22",
         },
         {
             "image_url": f"{HOST}/lsstsqre/sciplat-lab:d_2021_01_13",

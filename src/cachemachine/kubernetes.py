@@ -13,6 +13,7 @@ from kubernetes.client import (
     V1LocalObjectReference,
     V1Node,
     V1ObjectMeta,
+    V1OwnerReference,
     V1PodSecurityContext,
     V1PodSpec,
     V1PodTemplateSpec,
@@ -93,10 +94,27 @@ class KubernetesClient:
         else:
             pull_secret = []
 
+        # Copy annotations of this cachemachine pod (running this code),
+        # down to sub items it will create.
+        ds_annotations = self._read_current_pod_info("annotations")
+
+        # The labels on the daemonset and its pods should be a combination
+        # of the labels running on the cachemachine pod (running this code),
+        # and a bit of extra sauce.
+        ds_labels = self._read_current_pod_info("labels")
+
         # The pod cachemachine label is used to apply a NetworkPolicy.
+        ds_labels["cachemachine"] = "pull"
+
+        # This ties the pods to a particular cachemachine puller, so we could
+        # run and track multiple at the same time.  This matches the selector
+        # on the daemonset.
+        ds_labels["app"] = name
+
         template = V1PodTemplateSpec(
             metadata=V1ObjectMeta(
-                labels={"app": name, "cachemachine": "pull"}
+                annotations=ds_annotations,
+                labels=ds_labels,
             ),
             spec=V1PodSpec(
                 automount_service_account_token=False,
@@ -111,12 +129,25 @@ class KubernetesClient:
             ),
         )
 
-        spec = V1DaemonSetSpec(
-            template=template,
-            selector={"matchLabels": {"app": name}},
+        ds = V1DaemonSet(
+            metadata=V1ObjectMeta(
+                annotations=ds_annotations,
+                name=name,
+                labels=ds_labels,
+                owner_references=[
+                    V1OwnerReference(
+                        api_version="v1",
+                        kind="Pod",
+                        name=self._read_pod_info("name"),
+                        uid=self._read_pod_info("uid"),
+                    ),
+                ],
+            ),
+            spec=V1DaemonSetSpec(
+                template=template,
+                selector={"matchLabels": {"app": name}},
+            ),
         )
-
-        ds = V1DaemonSet(metadata=V1ObjectMeta(name=name), spec=spec)
 
         self.apps_api.create_namespaced_daemon_set(self.namespace, ds)
 
@@ -162,3 +193,44 @@ class KubernetesClient:
                 raise KubernetesDaemonsetNotFound()
             logger.exception(f"Exception checking on daemonset {name}")
             raise
+
+    def _read_pod_info(self, filename: str) -> str:
+        """Read the file containing some information about our current pod.
+
+        This data is provided as files mounted into the container by
+        kubernetes.
+
+        Parameters
+        ----------
+        filename: filename to read in /etc/podinfo.  The list is
+          available in the helm chart.
+
+        Returns
+        -------
+        Contents of that file."""
+        return Path("/etc/podinfo/", filename).read_text()
+
+    def _read_current_pod_info(self, info_type: str) -> Dict[str, str]:
+        """Load kubernetes downward API information about our pod.
+
+        This data is provided as files mounted into the container
+        by kubernetes.
+
+        Parameters
+        ----------
+        info_type: Either labels or annotations
+
+        Returns
+        -------
+        A dict containing the information in a way that kubernetes
+        can create it as a set of labels or annotations.
+        """
+        info = {}
+        # Format is k="v"
+        # Who knows why it quotes the value.
+        # Quotes aren't allowed in labels or annotations.
+        for line in self._read_pod_info(info_type).splitlines():
+            (k, v) = line.replace('"', "").split("=", 1)
+            info[k] = v
+
+        return info

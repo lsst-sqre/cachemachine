@@ -59,31 +59,26 @@ class RubinRepoMan(RepoMan):
         self.alias_tags = list(set(self.alias_tags))
 
     def _tag_from_ref(self, ref: str) -> str:
-        # https://github.com/distribution/distribution/blob/main/reference/reference.go  # noqa: E501
-        # There are two places there could be a colon: separating the tag from
-        # the name, or separating the digest algorithm from the digest.
-        # The only place the at sign appears is introducing a digest.
-        #
-        # We use the same strategy we did for extracting semantic fields from
-        # the tag: supply a list of regular expressions with named capture
-        # groups (in this case, just "tag") in order; the first match wins.
-        #
-        # In this case, we look for a digest first, and if we don't find that
-        # we just pick whatever follows the colon.
-        tag_restrs = [r".*:(?P<tag>.*)@.*:.*", r".*:(?P<tag>.*)"]
-        for res in tag_restrs:
-            m = re.compile(res + r"$").match(ref)
-            if m:
-                break  # We found it and are done.
-        # If we got a match, return the "tag" capture group.
-        if m:
-            return m.groupdict()["tag"]
+        """Extract the tag from a full Docker reference string.
+
+        https://github.com/distribution/distribution/blob/main/reference/reference.go  # noqa: E501
+
+        The two main formats of references we have to handle are:
+
+        - ``<name>:<tag>``
+        - ``<name>:<tag>@<digest-algo>:<digest>``
+
+        Disambiguate by knowing that the tag cannot contain ``@``.
+        """
+        match = re.compile(r"[^:]+:([^@]+)(?:\Z|@.*)").match(ref)
+        if match:
+            return match.group(1)
         # Nope, didn't match.  Must be the default tag.
         return DOCKER_DEFAULT_TAG
 
     def _cachehashes(
         self, common_cache: List[CachedDockerImage]
-    ) -> Tuple[Dict[str, str], Dict[str, Set[str]]]:  # noqa: E501
+    ) -> Tuple[Dict[str, str], Dict[str, Set[str]]]:
         logger.debug("Building image hash cache and its inverse.")
         hashcache: Dict[str, str] = {}
         inverse_hashcache: Dict[str, Set[str]] = {}

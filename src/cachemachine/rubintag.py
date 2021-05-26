@@ -2,12 +2,15 @@
 tag in the format specified by https://sqr-059.lsst.io."""
 
 import re
+from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Dict, List, Match, Optional, Tuple
+from typing import Dict, List, Match, Optional, Set, Tuple
 
 import structlog
 from semver import VersionInfo
+
+from cachemachine.types import CachedDockerImage
 
 
 class RubinTagType(Enum):
@@ -38,8 +41,8 @@ TAG: Dict[str, str] = {
     "rc": r"r(?P<major>\d+)_(?P<minor>\d+)_(?P<patch>\d+)_rc(?P<pre>\d+)",
     "weekly": r"w_(?P<year>\d+)_(?P<week>\d+)",
     "daily": r"d_(?P<year>\d+)_(?P<month>\d+)_(?P<day>\d+)",
-    "experimental": r"exp_(?P<rest>.*)",
-    "cycle": r"_(?P<ctag>c|csal)(?P<cycle>\d+\.\d+)",
+    "experimental": r"(?:exp)",
+    "cycle": r"_(?P<ctag>c|csal)(?P<cycle>\d+)\.(?P<cbuild>\d+)",
     "rest": r"_(?P<rest>.*)",
 }
 
@@ -105,8 +108,90 @@ TAGTYPE_REGEXPS: List[Tuple[RubinTagType, re.Pattern]] = [
     # d_2021_05_13
     (RubinTagType.DAILY, re.compile(TAG["daily"] + r"$")),
     # exp_w_2021_05_13_nosudo
-    (RubinTagType.EXPERIMENTAL, re.compile(TAG["experimental"] + r"$")),
+    (
+        RubinTagType.EXPERIMENTAL,
+        re.compile(TAG["experimental"] + TAG["rest"] + r"$"),
+    ),
 ]
+
+
+ForwardHashCache = Dict[str, str]
+
+
+InvertedHashCache = Dict[str, Set[str]]
+
+
+@dataclass(frozen=True)
+class RubinHashCache:
+    """Immutable, once constructed, the primary method of construction
+    is the from_cache classmethod.  The RubinHashCache holds both forward
+    and inverted dicts mapping a cachemachine common_cache to known image
+    tags.
+    """
+
+    tag_to_hash: ForwardHashCache
+    """Maps a Docker image tag to a hash.
+    """
+
+    hash_to_tags: InvertedHashCache
+    """Maps a hash to a set of Docker tags.
+    """
+
+    @classmethod
+    def from_cache(
+        cls, common_cache: List[CachedDockerImage]
+    ) -> "RubinHashCache":
+        logger.debug("Building image hash cache and its inverse.")
+        fwd_hashcache: ForwardHashCache = {}
+        inverted_hashcache: InvertedHashCache = defaultdict(set)
+        for entry in common_cache:
+            img_hash = entry.image_hash
+            alltags = entry.tags.copy()
+            # The tags in the common_cache object do not include the tag
+            # contained in its image_url; that is in some sense the
+            # primary key, so extract it...
+            tag = RubinHashCache._tag_from_ref(entry.image_url)
+            # ...and put it first in the list.
+            if tag:
+                alltags.insert(0, tag)
+            if img_hash and alltags:
+                for tag in alltags:
+                    inverted_hashcache[img_hash].add(tag)
+                    if tag in fwd_hashcache:
+                        # It's not clear whether the first or last should
+                        # win if we have different values for the digest
+                        # for a given tag, so we pick one (first) but squawk
+                        # about it.  Hopefully this is rare.
+                        if fwd_hashcache[tag] != img_hash:
+                            logger.error(
+                                f"Tag {tag} has hash {fwd_hashcache[tag]}"
+                                + f" ... not updating with hash {img_hash}"
+                            )
+                    else:
+                        fwd_hashcache[tag] = img_hash
+        return cls(tag_to_hash=fwd_hashcache, hash_to_tags=inverted_hashcache)
+
+    @staticmethod
+    def _tag_from_ref(ref: str) -> str:
+        """Extract the tag from a full Docker reference string.
+
+        https://github.com/distribution/distribution/blob/main/reference/reference.go  # noqa: E501
+
+        The two main formats of references we have to handle are:
+
+        - ``<name>:<tag>``
+        - ``<name>:<tag>@<digest-algo>:<digest>``
+
+        Disambiguate by knowing that the tag cannot contain ``@``.
+
+        Any image reference that does not have a tag implicitly has the tag
+        "latest", which we keep in DOCKER_DEFAULT_TAG.
+        """
+        match = re.compile(r"[^:]+:([^@]+)(?:\Z|@.*)").match(ref)
+        if match:
+            return match.group(1)
+        # Nope, didn't match.  Must be the default tag.
+        return DOCKER_DEFAULT_TAG
 
 
 @dataclass(frozen=True)
@@ -269,8 +354,9 @@ class RubinTag:
         md = match.groupdict()
         name = tag
         semver = None
-        cycle = md.get("cycle")
         ctag = md.get("ctag")
+        cycle = md.get("cycle")
+        cbuild = md.get("cbuild")
         cycle_int = None
         rest = md.get("rest")
         # We have our defaults.  The rest is optimistically seeing if we can
@@ -298,8 +384,8 @@ class RubinTag:
                 name = f"Experimental {nname}"
         else:
             # Everything else does get an actual semantic version
-            build = RubinTag.cycle_and_rest_to_optional_buildstring(
-                cycle, ctag, rest
+            build = RubinTag.cycle_cbuild_and_rest_to_optional_buildstring(
+                cycle, cbuild, ctag, rest
             )
             typename = RubinTag.titlecase(tagtype.name)
             restname = name[2:]
@@ -355,7 +441,7 @@ class RubinTag:
                 logger.warning(f"Could not make semver from tag {tag}: {exc}")
             name = f"{typename} {restname}"  # Glue together display name.
             if cycle:
-                name += f"_{ctag}{cycle}"
+                name += f"_{ctag}{cycle}.{cbuild}"
             if rest:
                 name += f"_{rest}"
             cycle_int = RubinTag.maybe_int(cycle)
@@ -370,18 +456,23 @@ class RubinTag:
         return int(float(n))
 
     @staticmethod
-    def cycle_and_rest_to_optional_buildstring(
+    def cycle_cbuild_and_rest_to_optional_buildstring(
         cycle: Optional[str],
+        cbuild: Optional[str],
         ctag: Optional[str],  # if present, either 'c' or 'csal'
         rest: Optional[str] = None,
     ) -> Optional[str]:
+        """This takes care of massaging the cycle components, and 'rest', into
+        a semver-compatible buildstring, which is dot-separated and can only
+        contain alphanumerics.
+        """
         if cycle:
             if rest:
                 # Cycle must always precede rest
-                rest = f"{ctag}{cycle}_{rest}"
+                rest = f"{ctag}{cycle}.{cbuild}_{rest}"
             else:
-                rest = f"{ctag}{cycle}"
-        # We're done with cycle now.
+                rest = f"{ctag}{cycle}.{cbuild}"
+        # We're done with cycle components now.
         if not rest:
             return None
         rest = rest.replace("_", ".")

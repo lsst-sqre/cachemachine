@@ -1,12 +1,16 @@
 """Repository Manager to manage Rubin Observatory images."""
 
-import re
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List, Set
 
 import structlog
 
 from cachemachine.dockerclient import DockerClient
-from cachemachine.rubintag import DOCKER_DEFAULT_TAG, RubinTag, RubinTagType
+from cachemachine.rubintag import (
+    DOCKER_DEFAULT_TAG,
+    RubinHashCache,
+    RubinTag,
+    RubinTagType,
+)
 from cachemachine.types import (
     CachedDockerImage,
     DesiredImageList,
@@ -58,61 +62,6 @@ class RubinRepoMan(RepoMan):
         # Cheap deduplication
         self.alias_tags = list(set(self.alias_tags))
 
-    def _tag_from_ref(self, ref: str) -> str:
-        """Extract the tag from a full Docker reference string.
-
-        https://github.com/distribution/distribution/blob/main/reference/reference.go  # noqa: E501
-
-        The two main formats of references we have to handle are:
-
-        - ``<name>:<tag>``
-        - ``<name>:<tag>@<digest-algo>:<digest>``
-
-        Disambiguate by knowing that the tag cannot contain ``@``.
-        """
-        match = re.compile(r"[^:]+:([^@]+)(?:\Z|@.*)").match(ref)
-        if match:
-            return match.group(1)
-        # Nope, didn't match.  Must be the default tag.
-        return DOCKER_DEFAULT_TAG
-
-    def _cachehashes(
-        self, common_cache: List[CachedDockerImage]
-    ) -> Tuple[Dict[str, str], Dict[str, Set[str]]]:
-        logger.debug("Building image hash cache and its inverse.")
-        hashcache: Dict[str, str] = {}
-        inverse_hashcache: Dict[str, Set[str]] = {}
-        for i in common_cache:
-            h = i.image_hash
-            alltags = i.tags.copy()
-            # The tags in the common_cache object do not include the tag
-            # contained in its image_url; that is in some sense the
-            # primary key, so extract it...
-            tag = self._tag_from_ref(i.image_url)
-            # ...and put it first in the list.
-            if tag:
-                alltags.insert(0, tag)
-            if h and alltags:
-                if h not in inverse_hashcache:
-                    inverse_hashcache[h] = set()
-                for ht in alltags:
-                    inverse_hashcache[h].add(ht)
-                    if ht in hashcache:
-                        # It's not clear whether the first or last should
-                        # win if we have different values for the digest
-                        # for a given tag, so we pick one (first) but squawk
-                        # about it.  Hopefully this is rare.
-                        if ht != h:
-                            logger.error(
-                                f"Tag {ht} already had hash {hashcache[ht]}"
-                                + f" ... not updating with hash {h}"
-                            )
-                    else:
-                        hashcache[ht] = h
-        logger.debug(f"Hash cache: {hashcache}")
-        logger.debug(f"Inverse hash cache: {inverse_hashcache}")
-        return hashcache, inverse_hashcache
-
     async def desired_images(
         self, common_cache: List[CachedDockerImage]
     ) -> DesiredImageList:
@@ -139,10 +88,8 @@ class RubinRepoMan(RepoMan):
 
         all_tags: List[RubinTag] = []
 
-        hashcache, inverse_hashcache = self._cachehashes(common_cache)
+        hashcache = RubinHashCache.from_cache(common_cache)
         for t in tags:
-            logger.debug(f"Checking tag: {t}")
-
             # We create a minimal tag object first; we may replace it with
             # one with more fields known as we figure them out.
             image_url = f"{self.registry_url}/{self.repo}:{t}"
@@ -151,7 +98,7 @@ class RubinRepoMan(RepoMan):
                 image_ref=image_url,
                 alias_tags=self.alias_tags,
                 override_name="",
-                digest=hashcache.get(t),
+                digest=hashcache.tag_to_hash.get(t),
             )
             if t in self.alias_tags:
                 logger.debug(f"Alias tag '{t}' found; finding equivalents.")
@@ -164,13 +111,16 @@ class RubinRepoMan(RepoMan):
                 #  tags corresponding to that digest
 
                 display_name = RubinTag.titlecase(t)
-                other_tags = inverse_hashcache.get(image_hash)
+                other_tags = hashcache.hash_to_tags.get(image_hash)
                 if other_tags:
-                    aka: Set[RubinTag] = set()
-                    for ot in other_tags:
+                    other_tagobjs: Set[RubinTag] = set()
+                    for other_tag in other_tags:
                         candidate = RubinTag.from_tag(
-                            tag=ot,
-                            image_ref=f"{self.registry_url}/{self.repo}:{ot}",
+                            tag=other_tag,
+                            image_ref=(
+                                f"{self.registry_url}/{self.repo}"
+                                + f":{other_tag}"
+                            ),
                             digest=image_hash,
                             alias_tags=self.alias_tags,
                         )
@@ -181,9 +131,9 @@ class RubinRepoMan(RepoMan):
                             continue  # Only add recognized, resolved images
                         # It's possible that we also want to exclude
                         # experimental images
-                        aka.add(candidate)
+                        other_tagobjs.add(candidate)
                     more_names = sorted(
-                        [a.display_name for a in aka], reverse=True
+                        [x.display_name for x in other_tagobjs], reverse=True
                     )
                     display_name += f" ({', '.join(more_names)})"
                 # Now that we know more about the tagged image, recreate

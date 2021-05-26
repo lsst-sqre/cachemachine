@@ -2,8 +2,7 @@ from typing import List, Optional
 
 import pytest
 
-from cachemachine.rubintag import RubinTag
-from cachemachine.rubintagtypes import RubinTagType
+from cachemachine.rubintag import RubinTag, RubinTagType
 
 # Set up all our input tags
 

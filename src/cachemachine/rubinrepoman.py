@@ -6,9 +6,7 @@ from typing import Any, Dict, List, Set, Tuple
 import structlog
 
 from cachemachine.dockerclient import DockerClient
-from cachemachine.rubintag import RubinTag
-from cachemachine.rubintagfuncs import DOCKER_DEFAULT_TAG, titlecase
-from cachemachine.rubintagtypes import RubinTagType
+from cachemachine.rubintag import DOCKER_DEFAULT_TAG, RubinTag, RubinTagType
 from cachemachine.types import (
     CachedDockerImage,
     DesiredImageList,
@@ -170,7 +168,7 @@ class RubinRepoMan(RepoMan):
                 # Now use the inverse hash cache we built to get any other
                 #  tags corresponding to that digest
 
-                display_name = titlecase(t)
+                display_name = RubinTag.titlecase(t)
                 other_tags = inverse_hashcache.get(image_hash)
                 if other_tags:
                     aka: Set[RubinTag] = set()

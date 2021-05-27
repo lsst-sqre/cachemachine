@@ -9,6 +9,7 @@ from cachemachine.rubintag import (
     DOCKER_DEFAULT_TAG,
     RubinHashCache,
     RubinTag,
+    RubinTagList,
     RubinTagType,
 )
 from cachemachine.types import (
@@ -86,7 +87,9 @@ class RubinRepoMan(RepoMan):
 
         all_tags: List[RubinTag] = []
 
+        logger.debug(f"common_cache -> {common_cache}")
         hashcache = RubinHashCache.from_cache(common_cache)
+        logger.debug(f"RubinHashCache -> {hashcache}")
         for t in tags:
             # If there are alias tags, we will replace this object later with
             # a richer one containing data from those tags.
@@ -155,61 +158,21 @@ class RubinRepoMan(RepoMan):
                     continue
             all_tags.append(tagobj)
 
+        taglist = RubinTagList(all_tags)
+
         # Note that for the dropdown, we want to display the tag, rather
-        # than its associated display name, hence our use of "t.tag" here
-        # rather than "t.display_name".
-        all_images = DockerImageList()
-        all_images.load(
-            [
-                {
-                    "image_url": t.image_ref,
-                    "image_hash": (t.digest or ""),
-                    "name": t.tag,
-                }
-                for t in all_tags
-            ]
-        )
-        releases = sorted(
-            [t for t in all_tags if t.image_type == RubinTagType.RELEASE],
-            reverse=True,
-        )
-        weeklies = sorted(
-            [t for t in all_tags if t.image_type == RubinTagType.WEEKLY],
-            reverse=True,
-        )
-        dailies = sorted(
-            [t for t in all_tags if t.image_type == RubinTagType.DAILY],
-            reverse=True,
+        # than its associated display name.
+        all_images = taglist.to_dockerimagelist(name_is_tag=True)
+        pull_images.extend(
+            taglist.sorted_images(
+                RubinTagType.RELEASE, count=self.num_releases
+            )
         )
         pull_images.extend(
-            [
-                DockerImage(
-                    image_url=t.image_ref,
-                    image_hash=t.digest,
-                    name=t.display_name,
-                )
-                for t in releases[: self.num_releases]
-            ]
+            taglist.sorted_images(RubinTagType.WEEKLY, count=self.num_weeklies)
         )
         pull_images.extend(
-            [
-                DockerImage(
-                    image_url=t.image_ref,
-                    image_hash=t.digest,
-                    name=t.display_name,
-                )
-                for t in weeklies[: self.num_weeklies]
-            ]
-        )
-        pull_images.extend(
-            [
-                DockerImage(
-                    image_url=t.image_ref,
-                    image_hash=t.digest,
-                    name=t.display_name,
-                )
-                for t in dailies[: self.num_dailies]
-            ]
+            taglist.sorted_images(RubinTagType.DAILY, count=self.num_dailies)
         )
         logger.info(f"Returning {pull_images}")
         return DesiredImageList(pull_images, all_images)

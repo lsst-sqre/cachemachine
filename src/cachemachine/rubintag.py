@@ -5,12 +5,12 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Dict, List, Match, Optional, Set, Tuple
+from typing import Dict, List, Match, Optional, Set, Tuple, Union
 
 import structlog
 from semver import VersionInfo
 
-from cachemachine.types import CachedDockerImage
+from cachemachine.types import CachedDockerImage, DockerImageList
 
 
 class RubinTagType(Enum):
@@ -150,7 +150,7 @@ class RubinHashCache:
     ) -> "RubinHashCache":
         fwd_hashcache: ForwardHashCache = {}
         inverted_hashcache: InvertedHashCache = defaultdict(set)
-        logger.debug("common_cache: {common_cache}")
+        logger.debug(f"c: {common_cache}")
         for entry in common_cache:
             img_hash = entry.image_hash
             alltags = entry.tags.copy()
@@ -176,6 +176,7 @@ class RubinHashCache:
                             )
                     else:
                         fwd_hashcache[tag] = img_hash
+        logger.debug(f"f: {fwd_hashcache}, i:{inverted_hashcache}")
         return cls(tag_to_hash=fwd_hashcache, hash_to_tags=inverted_hashcache)
 
     @staticmethod
@@ -202,11 +203,12 @@ class RubinHashCache:
 
 
 @dataclass(frozen=True)
-class RubinTag:
-    """Immutable, once constructed, the primary method of construction
-    is the from_tag classmethod.  The RubinTag holds all the metadata
-    encoded within a particular tag.
-    """
+class RubinPartialTag:
+    """Immutable, once constructed, the primary method of construction is the
+    parse_tag classmethod.  The RubinPartialTag holds the data that comes
+    from the tag, but not the associated data such as image_digest or
+    image_ref.  It does construct the display name, but does not know
+    about alias tags."""
 
     tag: str
     """This is the tag on a given image.  Because of cachemachine's design,
@@ -216,20 +218,6 @@ class RubinTag:
     be in different cachemachine instances.
 
     example: w_2021_22
-    """
-
-    image_ref: str
-    """This is the Docker reference for this particular image.  It's not
-    actually used within this class, but it's useful as general image
-    metadata, since it's required to pull the image.
-
-    example: index.docker.io/lsstsqre/sciplat-lab:w_2021_22
-    """
-
-    digest: Optional[str]
-    """Image digest for a particular image.
-
-    example: "sha256:419c4b7e14603711b25fa9e0569460a753c4b2449fe275bb5f89743b01794a30"  # noqa: E501
     """
 
     image_type: RubinTagType
@@ -258,110 +246,45 @@ class RubinTag:
     example: 20
     """
 
-    # We use a classmethod here rather than just allowing specification of
-    # the fields because we want a frozen class where most of the attributes
-    # are derived.
     @classmethod
-    def from_tag(
+    def parse_tag(
         cls,
         tag: str,
-        image_ref: str = "",
-        alias_tags: List[str] = [],
-        override_name: str = "",
-        digest: Optional[str] = None,
-        cycle: Optional[int] = None,
-    ) -> "RubinTag":
-        """Create a RubinTag object from a tag and a list of alias tags.
-        Allow overriding name rather than generating one, and allow an
-        optional digest parameter."""
-        image_type, display_name, semver, cycle = RubinTag.parse_tag(
-            tag,
-            override_name=override_name,
-            alias_tags=alias_tags,
-        )
+    ) -> "RubinPartialTag":
+        if not tag:
+            tag = DOCKER_DEFAULT_TAG  # This is a Docker convention
+        for (tagtype, regexp) in TAGTYPE_REGEXPS:
+            match = re.compile(regexp).match(tag)
+            if not match:
+                continue
+            display_name, semver, cycle = RubinPartialTag.extract_metadata(
+                match, tag, tagtype
+            )
+            return cls(
+                tag=tag,
+                image_type=tagtype,
+                display_name=display_name,
+                semantic_version=semver,
+                cycle=cycle,
+            )
+        # Didn't find any matches
         return cls(
             tag=tag,
-            image_ref=image_ref,
-            digest=digest,
-            image_type=image_type,
-            semantic_version=semver,
-            display_name=display_name,
-            cycle=cycle,
+            image_type=RubinTagType.UNKNOWN,
+            display_name=tag,
+            semantic_version=None,
+            cycle=None,
         )
 
-    def is_recognized(self) -> bool:
-        """Only return true if the image is a known type that is not known
-        to be an alias.  It's possible that we also want to exclude
-        experimental images.
-        """
-        img_type = self.image_type
-        unrecognized = [RubinTagType.UNKNOWN, RubinTagType.ALIAS]
-        if img_type in unrecognized:
-            return False
-        return True
-
-    def compare(self, other: "RubinTag") -> int:
-        """This is modelled after semver.compare, but raises an exception
-        if the images do not have the same image_type."""
-        if self.image_type != other.image_type:
-            raise IncomparableImageTypesError(
-                f"Tag '{self.tag}' of type {self.image_type} cannot be "
-                + f"compared to '{other.tag}' of type {other.image_type}."
-            )
-        # The easy case: we have a type with a semantic_version attribute.
-        # Use it.
-        if (
-            self.semantic_version is not None
-            and other.semantic_version is not None
-        ):
-            return self.semantic_version.compare(other.semantic_version)
-        if (
-            self.image_type == RubinTagType.UNKNOWN
-            or self.image_type == RubinTagType.ALIAS
-        ):
-            # Unknown and alias types can only be compared for equality by
-            #  tag.
-            if self.tag == other.tag:
-                return 0
-            raise IncomparableImageTypesError(
-                f"{self.tag} cannot be compared " f"to {other.tag}"
-            )
-        elif self.image_type == RubinTagType.EXPERIMENTAL:
-            # Experimentals can be sorted only by tag.
-            if self.tag == other.tag:
-                return 0
-            if self.tag < other.tag:
-                return -1
-            return 1
-        # We should not be able to get here, but the typechecker can't
-        # prove that.
-        raise IncomparableImageTypesError(
-            f"{self.tag} cannot be compared " f"to {other.tag}"
-        )
-
-    """Implement comparison operators."""
-
-    def __eq__(self, other: "RubinTag") -> bool:  # type: ignore[override]  # noqa: E501
-        return self.compare(other) == 0
-
-    def __ne__(self, other: "RubinTag") -> bool:  # type: ignore[override]  # noqa: E501
-        return not self.__eq__(other)
-
-    def __gt__(self, other: "RubinTag") -> bool:
-        return self.compare(other) == 1
-
-    def __le__(self, other: "RubinTag") -> bool:
-        return not self.__gt__(other)
-
-    def __lt__(self, other: "RubinTag") -> bool:
-        return self.compare(other) == -1
-
-    def __ge__(self, other: "RubinTag") -> bool:
-        return not self.__lt__(other)
-
-    """And finally a bunch of static methods that are used, ultimately,
-    by from_tag.
+    """Some static methods that are used, ultimately, by parse_tag.
     """
+
+    @staticmethod
+    def prettify_tag(tag: str) -> str:
+        """Little convenience wrapper for turning
+        (possibly-underscore-separated) tags into prettier space-separated
+        title case."""
+        return tag.replace("_", " ").title()
 
     @staticmethod
     def extract_metadata(
@@ -383,10 +306,6 @@ class RubinTag:
             # We can't do anything better, but we really shouldn't be
             # extracting from an unknown type.
             pass
-        elif tagtype == RubinTagType.ALIAS:
-            # We can slightly pretty-print the tag.  Again, we shouldn't be
-            # trying an extraction.
-            name = RubinTag.prettify_tag(name)
         elif tagtype == RubinTagType.EXPERIMENTAL:
             # This one is slightly complicated.  Because of the way the build
             # process works, our tag likely looks like exp_<other-legal-tag>.
@@ -396,16 +315,15 @@ class RubinTag:
             if rest is not None:
                 # it actually never will be None if the regexp matched, but
                 # mypy doesn't know that
-                _, nname, _, _ = RubinTag.parse_tag(
-                    rest
-                )  # We only care about the name.
-                name = f"Experimental {nname}"
+                temp_ptag = RubinPartialTag.parse_tag(rest)
+                # We only care about the display name, not any other fields.
+                name = f"Experimental {temp_ptag.display_name}"
         else:
             # Everything else does get an actual semantic version
-            build = RubinTag.trailing_parts_to_semver_build_component(
+            build = RubinPartialTag.trailing_parts_to_semver_build_component(
                 cycle, cbuild, ctag, rest
             )
-            typename = RubinTag.prettify_tag(tagtype.name)
+            typename = RubinPartialTag.prettify_tag(tagtype.name)
             restname = name[2:]
             if (
                 tagtype == RubinTagType.RELEASE
@@ -418,9 +336,9 @@ class RubinTag:
                 # try/expect block and return None if we can't construct
                 # a version.  In *that* case we have a tag without semantic
                 # version information--which is allowable.
-                major = RubinTag.maybe_int(md.get("major"))
-                minor = RubinTag.maybe_int(md.get("minor"))
-                patch = RubinTag.maybe_int(
+                major = RubinPartialTag.maybe_int(md.get("major"))
+                minor = RubinPartialTag.maybe_int(md.get("minor"))
+                patch = RubinPartialTag.maybe_int(
                     md.get("patch", "0")
                 )  # If omitted, it's zero
                 restname = f"r{major}.{minor}.{patch}"
@@ -433,16 +351,16 @@ class RubinTag:
                 month = md.get("month")
                 week = md.get("week")
                 day = md.get("day")
-                major = RubinTag.maybe_int(year)
+                major = RubinPartialTag.maybe_int(year)
                 if tagtype == RubinTagType.WEEKLY:
-                    minor = RubinTag.maybe_int(week)
+                    minor = RubinPartialTag.maybe_int(week)
                     patch = 0
                     restname = (
                         f"{year}_{week}"  # preserve initial string format
                     )
                 else:
-                    minor = RubinTag.maybe_int(md.get("month"))
-                    patch = RubinTag.maybe_int(md.get("day"))
+                    minor = RubinPartialTag.maybe_int(md.get("month"))
+                    patch = RubinPartialTag.maybe_int(md.get("day"))
                     restname = (
                         f"{year}_{month}_{day}"  # preserve string format
                     )
@@ -462,7 +380,7 @@ class RubinTag:
                 name += f"_{ctag}{cycle}.{cbuild}"
             if rest:
                 name += f"_{rest}"
-            cycle_int = RubinTag.maybe_int(cycle)
+            cycle_int = RubinPartialTag.maybe_int(cycle)
         return (name, semver, cycle_int)
 
     @staticmethod
@@ -500,45 +418,180 @@ class RubinTag:
             return None
         return rest
 
-    @staticmethod
-    def parse_tag(
-        tag: str,
-        override_name: str = "",
-        alias_tags: List[str] = [],
-    ) -> Tuple[RubinTagType, str, Optional[VersionInfo], Optional[int]]:
-        if not tag:
-            tag = DOCKER_DEFAULT_TAG  # This is a Docker convention
-        if tag in alias_tags:
-            tagtype = RubinTagType.ALIAS
-            name = RubinTag.prettify_tag(tag)
-            if override_name:
-                logger.debug(f"Overriding {name} with {override_name}")
-                name = override_name
-            return (tagtype, name, None, None)
-        for (tagtype, regexp) in TAGTYPE_REGEXPS:
-            match = re.compile(regexp).match(tag)
-            if not match:
-                continue
-            name, semver, cycle = RubinTag.extract_metadata(
-                match, tag, tagtype
+    def compare(self, other: "RubinTag") -> int:
+        """This is modelled after semver.compare, but raises an exception
+        if the images do not have the same image_type."""
+        if self.image_type != other.image_type:
+            raise IncomparableImageTypesError(
+                f"Tag '{self.tag}' of type {self.image_type} cannot be "
+                + f"compared to '{other.tag}' of type {other.image_type}."
             )
-            if override_name:
-                logger.debug(f"Overriding {name} with {override_name}")
-                name = override_name
-            if tagtype == RubinTagType.ALIAS or match:
-                return (tagtype, name, semver, cycle)
-        # Didn't find any matches
-        logger.warning(
-            f"Tag {tag} did not match any regexp; tag type is unknown."
+        # The easy case: we have a type with a semantic_version attribute.
+        # Use it.
+        if (
+            self.semantic_version is not None
+            and other.semantic_version is not None
+        ):
+            return self.semantic_version.compare(other.semantic_version)
+        # Otherwise, all we can do is sort lexigraphically by tag.
+        # Experimentals can be sorted only by tag.
+        if self.tag == other.tag:
+            return 0
+        if self.tag < other.tag:
+            return -1
+        return 1
+        # We should not be able to get here, but the typechecker can't
+        # prove that.
+        raise IncomparableImageTypesError(
+            f"{self.tag} cannot be compared " f"to {other.tag}"
         )
-        return (RubinTagType.UNKNOWN, tag, None, None)
 
-    @staticmethod
-    def prettify_tag(tag: str) -> str:
-        """Little convenience wrapper for turning
-        (possibly-underscore-separated) tags into prettier space-separated
-        title case."""
-        return tag.replace("_", " ").title()
+    """Implement comparison operators."""
+
+    def __eq__(self, other: "RubinPartialTag") -> bool:  # type: ignore[override]  # noqa: E501
+        return self.compare(other) == 0
+
+    def __ne__(self, other: "RubinPartialTag") -> bool:  # type: ignore[override]  # noqa: E501
+        return not self.__eq__(other)
+
+    def __gt__(self, other: "RubinPartialTag") -> bool:
+        return self.compare(other) == 1
+
+    def __le__(self, other: "RubinPartialTag") -> bool:
+        return not self.__gt__(other)
+
+    def __lt__(self, other: "RubinPartialTag") -> bool:
+        return self.compare(other) == -1
+
+    def __ge__(self, other: "RubinPartialTag") -> bool:
+        return not self.__lt__(other)
+
+
+@dataclass(frozen=True)
+class RubinTag(RubinPartialTag):
+    """Immutable, once constructed, the primary method of construction
+    is the from_tag classmethod.  The RubinTag holds all the metadata
+    encoded within a particular tag (in its base class) and also additional
+    metadata known and/or calculated via outside sources, such as the
+    image digest, whether the image is an alias, and the image reference.
+    """
+
+    image_ref: str
+    """This is the Docker reference for this particular image.  It's not
+    actually used within this class, but it's useful as general image
+    metadata, since it's required to pull the image.
+
+    example: index.docker.io/lsstsqre/sciplat-lab:w_2021_22
+    """
+
+    digest: Optional[str]
+    """Image digest for a particular image.
+
+    example: "sha256:419c4b7e14603711b25fa9e0569460a753c4b2449fe275bb5f89743b01794a30"  # noqa: E501
+    """
+
+    # We use a classmethod here rather than just allowing specification of
+    # the fields because we want a frozen class where most of the attributes
+    # are derived.
+    @classmethod
+    def from_tag(
+        cls,
+        tag: str,
+        image_ref: str = "",
+        alias_tags: List[str] = [],
+        override_name: str = "",
+        digest: Optional[str] = None,
+        cycle: Optional[int] = None,
+    ) -> "RubinTag":
+        """Create a RubinTag object from a tag and a list of alias tags.
+        Allow overriding name rather than generating one, and allow an
+        optional digest parameter."""
+        partial_tag = RubinPartialTag.parse_tag(tag)
+        image_type = partial_tag.image_type
+        display_name = partial_tag.display_name
+        # Here's where we glue in the alias knowledge
+        if tag in alias_tags:
+            logger.debug(f"Tag '{tag}' is an alias tag.")
+            image_type = RubinTagType.ALIAS
+            display_name = RubinPartialTag.prettify_tag(tag)
+        # And here we override the name if appropriate.
+        if override_name:
+            logger.debug(
+                f"Overriding display name '{display_name}'"
+                + f"with '{override_name}'"
+            )
+            display_name = override_name
+        return cls(
+            tag=tag,
+            image_ref=image_ref,
+            digest=digest,
+            image_type=image_type,
+            display_name=display_name,
+            semantic_version=partial_tag.semantic_version,
+            cycle=partial_tag.cycle,
+        )
+
+    def is_recognized(self) -> bool:
+        """Only return true if the image is a known type that is not known
+        to be an alias.  It's possible that we also want to exclude
+        experimental images.
+        """
+        img_type = self.image_type
+        unrecognized = [RubinTagType.UNKNOWN, RubinTagType.ALIAS]
+        if img_type in unrecognized:
+            return False
+        return True
+
+
+@dataclass(frozen=True)
+class RubinTagList:
+    """This is a class to hold tag objects and return sorted lists of them
+    for construction of the image menu.  It also allows compactification
+    of its input list, which may contain null objects--this is in order to
+    support image consolidation based on hash, if we decide to do that.
+    """
+
+    all_tags: Union[List[RubinTag], List[Optional[RubinTag]]]
+
+    def sorted_images(
+        self, img_type: RubinTagType, count: Optional[int] = None
+    ) -> DockerImageList:
+        """This returns a sorted list of images for a given type, highest
+        version (and thus most recent) at the top.  The optional count
+        parameter specifies how many images should be in the list; leaving it
+        None will return the entire list.
+        """
+        imgs = sorted(
+            [
+                t
+                for t in self.all_tags
+                if (t is not None and img_type == t.image_type)
+            ],
+            reverse=True,
+        )
+        if count is not None:
+            imgs = imgs[:count]
+        taglist = RubinTagList(imgs)
+        return taglist.to_dockerimagelist()
+
+    def to_dockerimagelist(self, name_is_tag: bool = False) -> DockerImageList:
+        image_list = DockerImageList()
+        nonempty_tags = [t for t in self.all_tags.copy() if t is not None]
+        image_list.load(
+            [
+                {
+                    "image_url": t.image_ref,
+                    "image_hash": (t.digest or ""),
+                    "name": (
+                        lambda name_is_tag: t.tag
+                        if name_is_tag
+                        else t.display_name
+                    )(name_is_tag),
+                }
+                for t in nonempty_tags
+            ]
+        )
+        return image_list
 
 
 class IncomparableImageTypesError(Exception):

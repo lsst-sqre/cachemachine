@@ -418,7 +418,7 @@ class RubinPartialTag:
             return None
         return rest
 
-    def compare(self, other: "RubinTag") -> int:
+    def compare(self, other: "RubinPartialTag") -> int:
         """This is modelled after semver.compare, but raises an exception
         if the images do not have the same image_type."""
         if self.image_type != other.image_type:
@@ -448,10 +448,12 @@ class RubinPartialTag:
 
     """Implement comparison operators."""
 
-    def __eq__(self, other: "RubinPartialTag") -> bool:  # type: ignore[override]  # noqa: E501
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, RubinPartialTag):
+            return NotImplemented
         return self.compare(other) == 0
 
-    def __ne__(self, other: "RubinPartialTag") -> bool:  # type: ignore[override]  # noqa: E501
+    def __ne__(self, other: object) -> bool:
         return not self.__eq__(other)
 
     def __gt__(self, other: "RubinPartialTag") -> bool:

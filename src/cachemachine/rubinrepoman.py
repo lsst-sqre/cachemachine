@@ -99,18 +99,13 @@ class RubinRepoMan(RepoMan):
                 digest=hashcache.tag_to_hash.get(t),
             )
             if t in self.alias_tags:
-                logger.debug(f"Alias tag '{t}' found; finding equivalents.")
-
                 image_hash = await self.docker_client.get_image_hash(t)
-
-                logger.debug(f"'{t}' digest -> {image_hash}")
-
                 # Now use the inverse hash cache we built to get any other
                 #  tags corresponding to that digest
-
                 display_name = RubinTag.prettify_tag(t)
                 other_tags = hashcache.hash_to_tags.get(image_hash)
                 if other_tags:
+                    logger.debug(f"Image {image_hash}: more tags {other_tags}")
                     other_tagobjs: Set[RubinTag] = set()
                     for other_tag in other_tags:
                         candidate = RubinTag.from_tag(

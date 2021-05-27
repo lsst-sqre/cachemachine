@@ -150,6 +150,7 @@ class RubinHashCache:
     ) -> "RubinHashCache":
         fwd_hashcache: ForwardHashCache = {}
         inverted_hashcache: InvertedHashCache = defaultdict(set)
+        logger.debug("common_cache: {common_cache}")
         for entry in common_cache:
             img_hash = entry.image_hash
             alltags = entry.tags.copy()
@@ -293,10 +294,11 @@ class RubinTag:
         to be an alias.  It's possible that we also want to exclude
         experimental images.
         """
-        return (
-            self.image_type == RubinTagType.UNKNOWN
-            or self.image_type == RubinTagType.ALIAS
-        )
+        img_type = self.image_type
+        unrecognized = [RubinTagType.UNKNOWN, RubinTagType.ALIAS]
+        if img_type in unrecognized:
+            return False
+        return True
 
     def compare(self, other: "RubinTag") -> int:
         """This is modelled after semver.compare, but raises an exception

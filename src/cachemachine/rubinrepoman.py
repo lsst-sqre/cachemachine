@@ -90,8 +90,8 @@ class RubinRepoMan(RepoMan):
 
         hashcache = RubinHashCache.from_cache(common_cache)
         for t in tags:
-            # We create a minimal tag object first; we may replace it with
-            # one with more fields known as we figure them out.
+            # If there are alias tags, we will replace this object later with
+            # a richer one containing data from those tags.
             image_url = f"{self.registry_url}/{self.repo}:{t}"
             tagobj = RubinTag.from_tag(
                 tag=t,
@@ -110,7 +110,7 @@ class RubinRepoMan(RepoMan):
                 # Now use the inverse hash cache we built to get any other
                 #  tags corresponding to that digest
 
-                display_name = RubinTag.titlecase(t)
+                display_name = RubinTag.prettify_tag(t)
                 other_tags = hashcache.hash_to_tags.get(image_hash)
                 if other_tags:
                     other_tagobjs: Set[RubinTag] = set()
@@ -124,13 +124,8 @@ class RubinRepoMan(RepoMan):
                             digest=image_hash,
                             alias_tags=self.alias_tags,
                         )
-                        if (
-                            candidate.image_type == RubinTagType.UNKNOWN
-                            or candidate.image_type == RubinTagType.ALIAS
-                        ):
+                        if not candidate.is_recognized():
                             continue  # Only add recognized, resolved images
-                        # It's possible that we also want to exclude
-                        # experimental images
                         other_tagobjs.add(candidate)
                     more_names = sorted(
                         [x.display_name for x in other_tagobjs], reverse=True

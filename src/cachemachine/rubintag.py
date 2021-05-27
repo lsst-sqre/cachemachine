@@ -37,12 +37,19 @@ logger = structlog.get_logger(__name__)
 # the TAGTYPE_REGEXPS tuple and prevents some duplication.  We will use named
 # group matches to make understanding the tag data easier.
 TAG: Dict[str, str] = {
+    # r22_0_1
     "release": r"r(?P<major>\d+)_(?P<minor>\d+)_(?P<patch>\d+)",
+    # r23_0_0_rc1
     "rc": r"r(?P<major>\d+)_(?P<minor>\d+)_(?P<patch>\d+)_rc(?P<pre>\d+)",
+    # w_2021_13
     "weekly": r"w_(?P<year>\d+)_(?P<week>\d+)",
+    # d_2021_05_13
     "daily": r"d_(?P<year>\d+)_(?P<month>\d+)_(?P<day>\d+)",
+    # exp_flattened_build
     "experimental": r"(?:exp)",
+    # c0020.002
     "cycle": r"_(?P<ctag>c|csal)(?P<cycle>\d+)\.(?P<cbuild>\d+)",
+    # _whatever_your_little_heart_desires
     "rest": r"_(?P<rest>.*)",
 }
 
@@ -114,7 +121,7 @@ TAGTYPE_REGEXPS: List[Tuple[RubinTagType, re.Pattern]] = [
     ),
 ]
 
-
+# Two convenience type aliases
 ForwardHashCache = Dict[str, str]
 
 
@@ -190,7 +197,7 @@ class RubinHashCache:
         match = re.compile(r"[^:]+:([^@]+)(?:\Z|@.*)").match(ref)
         if match:
             return match.group(1)
-        # Nope, didn't match.  Must be the default tag.
+        # Nope, didn't match a tag, so therefore implicitly the default tag.
         return DOCKER_DEFAULT_TAG
 
 
@@ -282,6 +289,16 @@ class RubinTag:
             cycle=cycle,
         )
 
+    def is_recognized(self) -> bool:
+        """Only return true if the image is a known type that is not known
+        to be an alias.  It's possible that we also want to exclude
+        experimental images.
+        """
+        return (
+            self.image_type == RubinTagType.UNKNOWN
+            or self.image_type == RubinTagType.ALIAS
+        )
+
     def compare(self, other: "RubinTag") -> int:
         """This is modelled after semver.compare, but raises an exception
         if the images do not have the same image_type."""
@@ -368,7 +385,7 @@ class RubinTag:
         elif tagtype == RubinTagType.ALIAS:
             # We can slightly pretty-print the tag.  Again, we shouldn't be
             # trying an extraction.
-            name = RubinTag.titlecase(name)
+            name = RubinTag.prettify_tag(name)
         elif tagtype == RubinTagType.EXPERIMENTAL:
             # This one is slightly complicated.  Because of the way the build
             # process works, our tag likely looks like exp_<other-legal-tag>.
@@ -384,10 +401,10 @@ class RubinTag:
                 name = f"Experimental {nname}"
         else:
             # Everything else does get an actual semantic version
-            build = RubinTag.cycle_cbuild_and_rest_to_optional_buildstring(
+            build = RubinTag.trailing_parts_to_semver_build_component(
                 cycle, cbuild, ctag, rest
             )
-            typename = RubinTag.titlecase(tagtype.name)
+            typename = RubinTag.prettify_tag(tagtype.name)
             restname = name[2:]
             if (
                 tagtype == RubinTagType.RELEASE
@@ -451,12 +468,10 @@ class RubinTag:
     def maybe_int(n: Optional[str]) -> Optional[int]:
         if n is None:
             return None
-        # We do the cast to float first to also catch the cycle case
-        # (e.g. '0019.001')
-        return int(float(n))
+        return int(n)
 
     @staticmethod
-    def cycle_cbuild_and_rest_to_optional_buildstring(
+    def trailing_parts_to_semver_build_component(
         cycle: Optional[str],
         cbuild: Optional[str],
         ctag: Optional[str],  # if present, either 'c' or 'csal'
@@ -464,7 +479,8 @@ class RubinTag:
     ) -> Optional[str]:
         """This takes care of massaging the cycle components, and 'rest', into
         a semver-compatible buildstring, which is dot-separated and can only
-        contain alphanumerics.
+        contain alphanumerics.  See SQR-059 for how it's used.
+        (https://github.com/lsst-sqre/sqr-059)
         """
         if cycle:
             if rest:
@@ -491,15 +507,9 @@ class RubinTag:
     ) -> Tuple[RubinTagType, str, Optional[VersionInfo], Optional[int]]:
         if not tag:
             tag = DOCKER_DEFAULT_TAG  # This is a Docker convention
-        if tag != tag.lower():
-            logger.warning(
-                "Tag is not lower case; flattening may cause "
-                + "collision; type is therefore unknown."
-            )
-            return (RubinTagType.UNKNOWN, tag, None, None)
         if tag in alias_tags:
             tagtype = RubinTagType.ALIAS
-            name = RubinTag.titlecase(tag)
+            name = RubinTag.prettify_tag(tag)
             logger.debug(f"Found tag type {tagtype}: {name}")
             if override_name:
                 logger.debug(f"Overriding name with {name}")
@@ -528,9 +538,10 @@ class RubinTag:
         return (RubinTagType.UNKNOWN, tag, None, None)
 
     @staticmethod
-    def titlecase(tag: str) -> str:
+    def prettify_tag(tag: str) -> str:
         """Little convenience wrapper for turning
-        (possibly-underscore-separated) tags into prettier title case."""
+        (possibly-underscore-separated) tags into prettier space-separated
+        title case."""
         return tag.replace("_", " ").title()
 
 

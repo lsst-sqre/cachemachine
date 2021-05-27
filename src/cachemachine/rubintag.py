@@ -150,7 +150,6 @@ class RubinHashCache:
     ) -> "RubinHashCache":
         fwd_hashcache: ForwardHashCache = {}
         inverted_hashcache: InvertedHashCache = defaultdict(set)
-        logger.debug(f"c: {common_cache}")
         for entry in common_cache:
             img_hash = entry.image_hash
             alltags = entry.tags.copy()
@@ -176,7 +175,6 @@ class RubinHashCache:
                             )
                     else:
                         fwd_hashcache[tag] = img_hash
-        logger.debug(f"f: {fwd_hashcache}, i:{inverted_hashcache}")
         return cls(tag_to_hash=fwd_hashcache, hash_to_tags=inverted_hashcache)
 
     @staticmethod
@@ -377,9 +375,9 @@ class RubinPartialTag:
                 logger.warning(f"Could not make semver from tag {tag}: {exc}")
             name = f"{typename} {restname}"  # Glue together display name.
             if cycle:
-                name += f"_{ctag}{cycle}.{cbuild}"
+                name += f" (SAL Cycle {cycle}, Build {cbuild})"
             if rest:
-                name += f"_{rest}"
+                name += f" [{rest}]"
             cycle_int = RubinPartialTag.maybe_int(cycle)
         return (name, semver, cycle_int)
 

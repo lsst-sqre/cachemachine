@@ -87,9 +87,7 @@ class RubinRepoMan(RepoMan):
 
         all_tags: List[RubinTag] = []
 
-        logger.debug(f"common_cache -> {common_cache}")
         hashcache = RubinHashCache.from_cache(common_cache)
-        logger.debug(f"RubinHashCache -> {hashcache}")
         for t in tags:
             # If there are alias tags, we will replace this object later with
             # a richer one containing data from those tags.
@@ -108,7 +106,6 @@ class RubinRepoMan(RepoMan):
                 display_name = RubinTag.prettify_tag(t)
                 other_tags = hashcache.hash_to_tags.get(image_hash)
                 if other_tags:
-                    logger.debug(f"Image {image_hash}: more tags {other_tags}")
                     other_tagobjs: Set[RubinTag] = set()
                     for other_tag in other_tags:
                         candidate = RubinTag.from_tag(

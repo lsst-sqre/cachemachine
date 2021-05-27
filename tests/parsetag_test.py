@@ -57,7 +57,7 @@ TAGSTR_TO_TAGOBJ = [
         RubinPartialTag(
             tag="r21_0_1_c0020.001",
             image_type=RubinTagType.RELEASE,
-            display_name="Release r21.0.1_c0020.001",
+            display_name="Release r21.0.1 (SAL Cycle 0020, Build 001)",
             semantic_version=VersionInfo(
                 major=21, minor=0, patch=1, prerelease=None, build="c0020.001"
             ),
@@ -69,7 +69,7 @@ TAGSTR_TO_TAGOBJ = [
         RubinPartialTag(
             tag="r22_0_0_rc1_c0020.001",
             image_type=RubinTagType.RELEASE_CANDIDATE,
-            display_name="Release Candidate r22.0.0-rc1_c0020.001",
+            display_name="Release Candidate r22.0.0-rc1 (SAL Cycle 0020, Build 001)",  # noqa: E501
             semantic_version=VersionInfo(
                 major=22, minor=0, patch=0, prerelease="rc1", build="c0020.001"
             ),
@@ -81,7 +81,7 @@ TAGSTR_TO_TAGOBJ = [
         RubinPartialTag(
             tag="w_2021_22_c0020.001",
             image_type=RubinTagType.WEEKLY,
-            display_name="Weekly 2021_22_c0020.001",
+            display_name="Weekly 2021_22 (SAL Cycle 0020, Build 001)",
             semantic_version=VersionInfo(
                 major=2021,
                 minor=22,
@@ -97,7 +97,7 @@ TAGSTR_TO_TAGOBJ = [
         RubinPartialTag(
             tag="d_2021_05_27_c0020.001",
             image_type=RubinTagType.DAILY,
-            display_name="Daily 2021_05_27_c0020.001",
+            display_name="Daily 2021_05_27 (SAL Cycle 0020, Build 001)",
             semantic_version=VersionInfo(
                 major=2021,
                 minor=5,
@@ -113,7 +113,7 @@ TAGSTR_TO_TAGOBJ = [
         RubinPartialTag(
             tag="r21_0_1_20210527",
             image_type=RubinTagType.RELEASE,
-            display_name="Release r21.0.1_20210527",
+            display_name="Release r21.0.1 [20210527]",
             semantic_version=VersionInfo(
                 major=21, minor=0, patch=1, prerelease=None, build="20210527"
             ),
@@ -125,7 +125,7 @@ TAGSTR_TO_TAGOBJ = [
         RubinPartialTag(
             tag="r22_0_0_rc1_20210527",
             image_type=RubinTagType.RELEASE_CANDIDATE,
-            display_name="Release Candidate r22.0.0-rc1_20210527",
+            display_name="Release Candidate r22.0.0-rc1 [20210527]",
             semantic_version=VersionInfo(
                 major=22, minor=0, patch=0, prerelease="rc1", build="20210527"
             ),
@@ -137,7 +137,7 @@ TAGSTR_TO_TAGOBJ = [
         RubinPartialTag(
             tag="w_2021_22_20210527",
             image_type=RubinTagType.WEEKLY,
-            display_name="Weekly 2021_22_20210527",
+            display_name="Weekly 2021_22 [20210527]",
             semantic_version=VersionInfo(
                 major=2021,
                 minor=22,
@@ -153,7 +153,7 @@ TAGSTR_TO_TAGOBJ = [
         RubinPartialTag(
             tag="d_2021_05_27_20210527",
             image_type=RubinTagType.DAILY,
-            display_name="Daily 2021_05_27_20210527",
+            display_name="Daily 2021_05_27 [20210527]",
             semantic_version=VersionInfo(
                 major=2021,
                 minor=5,
@@ -169,7 +169,7 @@ TAGSTR_TO_TAGOBJ = [
         RubinPartialTag(
             tag="r21_0_1_c0020.001_20210527",
             image_type=RubinTagType.RELEASE,
-            display_name="Release r21.0.1_c0020.001_20210527",
+            display_name="Release r21.0.1 (SAL Cycle 0020, Build 001) [20210527]",  # noqa: E501
             semantic_version=VersionInfo(
                 major=21,
                 minor=0,
@@ -185,7 +185,7 @@ TAGSTR_TO_TAGOBJ = [
         RubinPartialTag(
             tag="r22_0_0_rc1_c0020.001_20210527",
             image_type=RubinTagType.RELEASE_CANDIDATE,
-            display_name="Release Candidate r22.0.0-rc1_c0020.001_20210527",
+            display_name="Release Candidate r22.0.0-rc1 (SAL Cycle 0020, Build 001) [20210527]",  # noqa: E501
             semantic_version=VersionInfo(
                 major=22,
                 minor=0,
@@ -201,7 +201,7 @@ TAGSTR_TO_TAGOBJ = [
         RubinPartialTag(
             tag="w_2021_22_c0020.001_20210527",
             image_type=RubinTagType.WEEKLY,
-            display_name="Weekly 2021_22_c0020.001_20210527",
+            display_name="Weekly 2021_22_ (SAL Cycle 0020, Build 001) [20210527]",  # noqa: E501
             semantic_version=VersionInfo(
                 major=2021,
                 minor=22,
@@ -217,7 +217,7 @@ TAGSTR_TO_TAGOBJ = [
         RubinPartialTag(
             tag="d_2021_05_27_c0020.001_20210527",
             image_type=RubinTagType.DAILY,
-            display_name="Daily 2021_05_27_c0020.001_20210527",
+            display_name="Daily 2021_05_27 (SAL Cycle 0020, Build 001) [20210527]",  # noqa: E501
             semantic_version=VersionInfo(
                 major=2021,
                 minor=5,

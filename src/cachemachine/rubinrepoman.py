@@ -82,8 +82,6 @@ class RubinRepoMan(RepoMan):
         # the dailies, weeklies, releases, and recommended are in here.
         tags = sorted(await self.docker_client.list_tags(), reverse=True)
 
-        logger.debug(f"Registry returned tags: {tags}")
-        logger.debug(f"Common cache: {common_cache}")
         pull_images = DockerImageList()
 
         all_tags: List[RubinTag] = []
@@ -133,7 +131,6 @@ class RubinRepoMan(RepoMan):
                     display_name += f" ({', '.join(more_names)})"
                 # Now that we know more about the tagged image, recreate
                 # the RubinTag object with the additional info.
-                logger.debug(f"{t} display_name -> {display_name}")
                 tagobj = RubinTag.from_tag(
                     tag=t,
                     image_ref=image_url,
@@ -142,14 +139,12 @@ class RubinRepoMan(RepoMan):
                     digest=image_hash,
                     cycle=self.cycle,
                 )
-                logger.debug(f"rebuilt tagobj {tagobj}")
             if t == self.recommended_tag:
                 # The point of the "recommended_tag" is that it is always
                 # pulled and put at the front of the pulled-image list.
                 # We want to do this check after we resolve aliases
                 # so that the tag object has a digest and the accurately-
                 # resolved display name
-                logger.debug(f"insert recommended {tagobj}")
                 pull_images.insert(
                     0,  # At the front (not that it matters here)
                     DockerImage(

@@ -148,7 +148,6 @@ class RubinHashCache:
     def from_cache(
         cls, common_cache: List[CachedDockerImage]
     ) -> "RubinHashCache":
-        logger.debug("Building image hash cache and its inverse.")
         fwd_hashcache: ForwardHashCache = {}
         inverted_hashcache: InvertedHashCache = defaultdict(set)
         for entry in common_cache:
@@ -510,9 +509,8 @@ class RubinTag:
         if tag in alias_tags:
             tagtype = RubinTagType.ALIAS
             name = RubinTag.prettify_tag(tag)
-            logger.debug(f"Found tag type {tagtype}: {name}")
             if override_name:
-                logger.debug(f"Overriding name with {name}")
+                logger.debug(f"Overriding {name} with {override_name}")
                 name = override_name
             return (tagtype, name, None, None)
         for (tagtype, regexp) in TAGTYPE_REGEXPS:
@@ -522,13 +520,9 @@ class RubinTag:
             name, semver, cycle = RubinTag.extract_metadata(
                 match, tag, tagtype
             )
-            logger.debug(
-                f"Found tag type {tagtype}:"
-                + f"{name} | version {semver} | cycle {cycle}"
-            )
             if override_name:
+                logger.debug(f"Overriding {name} with {override_name}")
                 name = override_name
-                logger.debug(f"Overriding name with {name}")
             if tagtype == RubinTagType.ALIAS or match:
                 return (tagtype, name, semver, cycle)
         # Didn't find any matches

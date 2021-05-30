@@ -156,7 +156,7 @@ class RubinHashCache:
             # The tags in the common_cache object do not include the tag
             # contained in its image_url; that is in some sense the
             # primary key, so extract it...
-            tag = RubinHashCache._tag_from_ref(entry.image_url)
+            tag = cls._tag_from_ref(entry.image_url)
             # ...and put it first in the list.
             if tag:
                 alltags.insert(0, tag)

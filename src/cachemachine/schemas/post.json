@@ -117,7 +117,9 @@
                         ],
                         "optional": [
                             "recommended_tag",
-                            "registry_url"
+                            "registry_url",
+                            "cycle",
+                            "alias_tags"
                         ],
                         "properties": {
                             "type": {
@@ -188,6 +190,28 @@
                                 "default": 0,
                                 "examples": [
                                     3
+                                ]
+                            },
+                            "cycle": {
+                                "$id": "#/properties/repomen/items/anyOf/0/properties/cycle",
+                                "type": "integer",
+                                "title": "SAL XML Cycle",
+                                "description": "SAL XML Cycle number for T&S builds.",
+                                "default": null,
+                                "examples": [
+                                    20
+                                ]
+                            },
+                            "alias_tags": {
+                                "$id": "#/properties/repomen/items/anyOf/0/properties/alias_tags",
+                                "type": "array",
+                                "title": "Alias Tags",
+                                "description": "List of tags known to be aliases.",
+                                "default": [],
+                                "examples": [
+                                    [ "recommended",
+                                      "latest"
+                                    ]
                                 ]
                             }
                         },

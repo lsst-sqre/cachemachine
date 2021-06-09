@@ -61,8 +61,16 @@ mock_registry = {
     "recommended": "sha256:b0b7d97ff9d62ccd049",
     "r22_0_0_rc1": "sha256:0000deadbeeffaceffff",
     "r21_0_0": "sha256:b0b7d97ff9d62ccd049",
+    "w_2021_22": "sha256:3fc76a592a063b9532f",
+    "w_2021_21_c0021.003": "sha256:77cd87542ba742ba407",
+    #  Not-known-to-be-alias-tags-that-are-aliases need a little more work.
+    #  We need to decide if these count as one image or multiple images and
+    #  whether to further resolve the display name if we collapse them into
+    #  fewer images.
+    #    "w_2021_21_c0021.003_20210514": "sha256:77cd87542ba742ba407",
+    #    "w_2021_21_20210514": "sha256:77cd87542ba742ba407",
+    "w_2021_19_c0020.001": "sha256:6259c1b6c6a3d042b5",
     "w_2021_03": "sha256:bb16e5ea71bd7139779",
-    "w_2021_02": "sha256:bad6e5ea71bd7139779",
     "d_2021_01_13": "sha256:343b17341d0e961472",
     "d_2021_01_12": "sha256:badb17341d0e961471",
 }

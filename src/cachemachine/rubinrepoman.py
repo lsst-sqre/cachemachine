@@ -1,10 +1,17 @@
 """Repository Manager to manage Rubin Observatory images."""
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 
 import structlog
 
 from cachemachine.dockerclient import DockerClient
+from cachemachine.rubintag import (
+    DOCKER_DEFAULT_TAG,
+    RubinHashCache,
+    RubinTag,
+    RubinTagList,
+    RubinTagType,
+)
 from cachemachine.types import (
     CachedDockerImage,
     DesiredImageList,
@@ -32,6 +39,12 @@ class RubinRepoMan(RepoMan):
             num_dailies: number of daily images to pull.
             num_weeklies: number of weekly images to pull.
             num_releases: number of release images to pull.
+            cycle: SAL XML cycle (optional).  Restrict images to this (integer)
+                   cycle, if specified.
+            alias_tags: list of tags to be treated as aliases to other images.
+                        Optional, usually supplied as the empty list.  No
+                        matter what, the DOCKER_DEFAULT_TAG is put into
+                        that list, and so is the recommended tag if it exists.
         """
         self.registry_url = body.get("registry_url", DOCKER_REGISTRY_HOST)
         self.repo = body["repo"]
@@ -40,6 +53,15 @@ class RubinRepoMan(RepoMan):
         self.num_dailies: int = body["num_dailies"]
         self.num_weeklies: int = body["num_weeklies"]
         self.num_releases: int = body["num_releases"]
+        self.cycle = body.get("cycle", None)
+        self.alias_tags = body.get("alias_tags", [])
+        # The recommended_tag is by its nature an alias tag, and so is
+        # "latest" (DOCKER_DEFAULT_TAG), so add those if they're not there.
+        self.alias_tags.append(DOCKER_DEFAULT_TAG)
+        if self.recommended_tag:
+            self.alias_tags.append(self.recommended_tag)
+        # Cheap deduplication
+        self.alias_tags = list(set(self.alias_tags))
 
     async def desired_images(
         self, common_cache: List[CachedDockerImage]
@@ -61,128 +83,91 @@ class RubinRepoMan(RepoMan):
         # the dailies, weeklies, releases, and recommended are in here.
         tags = sorted(await self.docker_client.list_tags(), reverse=True)
 
-        logger.debug(f"Registry returned tags: {tags}")
-
         pull_images = DockerImageList()
-        all_images = DockerImageList()
-        dailies = DockerImageList()
-        weeklies = DockerImageList()
-        releases = DockerImageList()
 
+        all_tags: List[RubinTag] = []
+
+        hashcache = RubinHashCache.from_cache(common_cache)
         for t in tags:
-            logger.debug(f"Checking tag: {t}")
-
+            # If there are alias tags, we will replace this object later with
+            # a richer one containing data from those tags.
             image_url = f"{self.registry_url}/{self.repo}:{t}"
-
-            if t == self.recommended_tag:
-                # Logic for generating the name of the recommended tag here.
-                aka: List[str] = []
-
-                # Get the hash of the recommended image.
-                image_hash = await self.docker_client.get_image_hash(t)
-
-                # Find all other images in the common cache that have the
-                # same image hash (which means the same image data), and
-                # combine the list of known tags into one.  All of these
-                # are valid tags that point to the same image, but only
-                # exist if the image was pulled by that tag.
-                for i in common_cache:
-                    if i.image_hash == image_hash:
-                        for x in i.tags:
-                            if x != self.recommended_tag and x not in aka:
-                                aka.append(x)
-
-                # Generate the name based on what other tags it is known by.
-                if aka:
-                    friendly_names = [self._friendly_name(a) for a in aka]
-                    name = f"Recommended ({','.join(friendly_names)})"
-                else:
-                    name = "Recommended"
-
-                pull_images.append(
-                    DockerImage(
-                        image_url=image_url,
-                        image_hash=image_hash,
-                        name=name,
-                    )
-                )
-            elif t.startswith("d_") and len(dailies) < self.num_dailies:
-                # Ex: d_2020_11_0
-                image_hash = await self.docker_client.get_image_hash(t)
-                dailies.append(
-                    DockerImage(
-                        image_url=image_url,
-                        image_hash=image_hash,
-                        name=self._friendly_name(t),
-                    )
-                )
-            elif t.startswith("w_") and len(weeklies) < self.num_weeklies:
-                image_hash = await self.docker_client.get_image_hash(t)
-                weeklies.append(
-                    DockerImage(
-                        image_url=image_url,
-                        image_hash=image_hash,
-                        name=self._friendly_name(t),
-                    )
-                )
-            elif (
-                self._is_real_release(t) and len(releases) < self.num_releases
-            ):
-                image_hash = await self.docker_client.get_image_hash(t)
-                releases.append(
-                    DockerImage(
-                        image_url=image_url,
-                        image_hash=image_hash,
-                        name=self._friendly_name(t),
-                    )
-                )
-
-            all_images.append(
-                DockerImage(
-                    image_url=image_url,
-                    image_hash=None,
-                    name=t,
-                )
+            tagobj = RubinTag.from_tag(
+                tag=t,
+                image_ref=image_url,
+                alias_tags=self.alias_tags,
+                override_name="",
+                digest=hashcache.tag_to_hash.get(t),
             )
+            if t in self.alias_tags:
+                image_hash = await self.docker_client.get_image_hash(t)
+                # Now use the inverse hash cache we built to get any other
+                #  tags corresponding to that digest
+                display_name = RubinTag.prettify_tag(t)
+                other_tags = hashcache.hash_to_tags.get(image_hash)
+                if other_tags:
+                    other_tagobjs: Set[RubinTag] = set()
+                    for other_tag in other_tags:
+                        candidate = RubinTag.from_tag(
+                            tag=other_tag,
+                            image_ref=(
+                                f"{self.registry_url}/{self.repo}"
+                                + f":{other_tag}"
+                            ),
+                            digest=image_hash,
+                            alias_tags=self.alias_tags,
+                        )
+                        if candidate.is_recognized():
+                            # Only add recognized, resolved images
+                            other_tagobjs.add(candidate)
+                    more_names = sorted(
+                        [x.display_name for x in other_tagobjs], reverse=True
+                    )
+                    display_name += f" ({', '.join(more_names)})"
+                # Now that we know more about the tagged image, recreate
+                # the RubinTag object with the additional info.
+                tagobj = RubinTag.from_tag(
+                    tag=t,
+                    image_ref=image_url,
+                    alias_tags=self.alias_tags,
+                    override_name=display_name,
+                    digest=image_hash,
+                    cycle=self.cycle,
+                )
+            if t == self.recommended_tag:
+                # The point of the "recommended_tag" is that it is always
+                # pulled and put at the front of the pulled-image list.
+                # We want to do this check after we resolve aliases
+                # so that the tag object has a digest and the accurately-
+                # resolved display name
+                pull_images.insert(
+                    0,  # At the front (not that it matters here)
+                    DockerImage(
+                        image_url=tagobj.image_ref,
+                        image_hash=tagobj.digest,
+                        name=tagobj.display_name,
+                    ),
+                )
+            # If we are restricting by cycle only add the tag objects that
+            #  match the correct cycle.
+            if self.cycle is None or (tagobj.cycle == self.cycle):
+                all_tags.append(tagobj)
 
-        pull_images.extend(releases)
-        pull_images.extend(weeklies)
-        pull_images.extend(dailies)
+        taglist = RubinTagList(all_tags)
+
+        # Note that for the dropdown, we want to display the tag, rather
+        # than its associated display name.
+        all_images = taglist.to_dockerimagelist(name_is_tag=True)
+        pull_images.extend(
+            taglist.sorted_images(
+                RubinTagType.RELEASE, count=self.num_releases
+            )
+        )
+        pull_images.extend(
+            taglist.sorted_images(RubinTagType.WEEKLY, count=self.num_weeklies)
+        )
+        pull_images.extend(
+            taglist.sorted_images(RubinTagType.DAILY, count=self.num_dailies)
+        )
         logger.info(f"Returning {pull_images}")
         return DesiredImageList(pull_images, all_images)
-
-    def _friendly_name(self, tag: str) -> str:
-        """Generate the friendly name of an image based on its tag.
-
-        Parameters
-        ----------
-        tag: tag to generate the friendly name of.  Only works on
-          release, weekly, and daily tags.
-
-        Returns
-        -------
-        The friendly name of the tag.
-        """
-        tag_parts = tag.split("_")
-
-        if tag.startswith("d_"):
-            return f"Daily {tag_parts[1]}_{tag_parts[2]}_{tag_parts[3]}"
-        elif tag.startswith("w_"):
-            return f"Weekly {tag_parts[1]}_{tag_parts[2]}"
-        elif tag.startswith("r"):
-            return "Release " + ".".join(tag_parts)
-        else:
-            # Should never reach here...
-            raise Exception(f"Unexpected tag name {tag}")
-
-    def _is_real_release(self, tag: str) -> bool:
-        """We want to be able to reject release RC versions
-        (e.g. r_22_0_0_rc1).
-
-        Our heuristic here is that if the last tag component contains only
-        digits then it is a release version; otherwise it is not.
-        """
-        tag_parts = tag.split("_")
-        if tag.startswith("r") and tag_parts[-1].isdigit():
-            return True
-        return False

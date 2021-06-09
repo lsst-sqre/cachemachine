@@ -86,13 +86,11 @@ class CacheMachine:
 
     def inspect_node_caches(self) -> None:
         nodes = self.kubernetes.list_nodes()
-        logger.debug(f"Inspecting {nodes}")
 
         first_node = True
         common_cache = DockerImageList()
 
         for n in nodes:
-            logger.debug(f"{n.metadata.name} labels: {n.metadata.labels}")
 
             # Do the labels we are looking for match this node?
             if self.labels.matches(n.metadata.labels):
@@ -130,9 +128,7 @@ class CacheMachine:
                             (repository, new_tag) = url.split(":")
                             if new_tag not in entries[repository].tags:
                                 entries[repository].tags.append(new_tag)
-                        logger.debug(f"building entries: {entries}")
 
-                    logger.debug(f"entries: {entries}")
                     for repository, ie in entries.items():
                         for t in ie.tags:
                             other_tags = list(ie.tags)
@@ -150,8 +146,6 @@ class CacheMachine:
                                         tags=other_tags,
                                     )
                                 )
-
-                logger.debug(f"{n.metadata.name} images: {node_images}")
 
                 if first_node:
                     # This is the first node we're looking at

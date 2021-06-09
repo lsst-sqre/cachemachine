@@ -117,9 +117,9 @@ class RubinRepoMan(RepoMan):
                             digest=image_hash,
                             alias_tags=self.alias_tags,
                         )
-                        if not candidate.is_recognized():
-                            continue  # Only add recognized, resolved images
-                        other_tagobjs.add(candidate)
+                        if candidate.is_recognized():
+                            # Only add recognized, resolved images
+                            other_tagobjs.add(candidate)
                     more_names = sorted(
                         [x.display_name for x in other_tagobjs], reverse=True
                     )
@@ -150,10 +150,8 @@ class RubinRepoMan(RepoMan):
                 )
             # If we are restricting by cycle only add the tag objects that
             #  match the correct cycle.
-            if self.cycle is not None:
-                if tagobj.cycle != self.cycle:
-                    continue
-            all_tags.append(tagobj)
+            if self.cycle is None or (tagobj.cycle == self.cycle):
+                all_tags.append(tagobj)
 
         taglist = RubinTagList(all_tags)
 

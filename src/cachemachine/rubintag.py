@@ -122,9 +122,10 @@ TAGTYPE_REGEXPS: List[Tuple[RubinTagType, re.Pattern]] = [
 ]
 
 # Two convenience type aliases
+# ForwardHashCache maps an image tag to an image digest
 ForwardHashCache = Dict[str, str]
 
-
+# InvertedHashCache maps an image digest to a set of image tags
 InvertedHashCache = Dict[str, Set[str]]
 
 
@@ -158,8 +159,7 @@ class RubinHashCache:
             # primary key, so extract it...
             tag = cls._tag_from_ref(entry.image_url)
             # ...and put it first in the list.
-            if tag:
-                alltags.insert(0, tag)
+            alltags.insert(0, tag)
             if img_hash and alltags:
                 for tag in alltags:
                     inverted_hashcache[img_hash].add(tag)
@@ -438,11 +438,6 @@ class RubinPartialTag:
         if self.tag < other.tag:
             return -1
         return 1
-        # We should not be able to get here, but the typechecker can't
-        # prove that.
-        raise IncomparableImageTypesError(
-            f"{self.tag} cannot be compared " f"to {other.tag}"
-        )
 
     """Implement comparison operators."""
 

@@ -1,12 +1,11 @@
 """Repository Manager to manage Rubin Observatory images."""
 
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Optional, Set
 
 import structlog
 
 from cachemachine.dockerclient import DockerClient
 from cachemachine.rubintag import (
-    DOCKER_DEFAULT_TAG,
     RubinHashCache,
     RubinTag,
     RubinTagList,
@@ -42,9 +41,8 @@ class RubinRepoMan(RepoMan):
             cycle: SAL XML cycle (optional).  Restrict images to this (integer)
                    cycle, if specified.
             alias_tags: list of tags to be treated as aliases to other images.
-                        Optional, usually supplied as the empty list.  No
-                        matter what, the DOCKER_DEFAULT_TAG is put into
-                        that list, and so is the recommended tag if it exists.
+                        Optional, usually supplied as the empty list.  The
+                        recommended_tag is added to this list if it exists.
         """
         self.registry_url = body.get("registry_url", DOCKER_REGISTRY_HOST)
         self.repo = body["repo"]
@@ -55,11 +53,12 @@ class RubinRepoMan(RepoMan):
         self.num_releases: int = body["num_releases"]
         self.cycle = body.get("cycle", None)
         self.alias_tags = body.get("alias_tags", [])
-        # The recommended_tag is by its nature an alias tag, and so is
-        # "latest" (DOCKER_DEFAULT_TAG), so add those if they're not there.
-        self.alias_tags.append(DOCKER_DEFAULT_TAG)
+        # The recommended_tag is by its nature an alias tag.
+        # So is "latest" (DOCKER_DEFAULT_TAG), but it's very possible we don't
+        # want to pull "latest".  Add recommended if we have it, but the
+        # DOCKER_DEFAULT_TAG only if it's already listed in alias_tags.
         if self.recommended_tag:
-            self.alias_tags.append(self.recommended_tag)
+            self.alias_tags.insert(0, self.recommended_tag)
         # Cheap deduplication
         self.alias_tags = list(set(self.alias_tags))
 
@@ -100,6 +99,7 @@ class RubinRepoMan(RepoMan):
                 digest=hashcache.tag_to_hash.get(t),
             )
             if t in self.alias_tags:
+                tag_cycle: Optional[int] = None
                 image_hash = await self.docker_client.get_image_hash(t)
                 # Now use the inverse hash cache we built to get any other
                 #  tags corresponding to that digest
@@ -120,6 +120,11 @@ class RubinRepoMan(RepoMan):
                         if candidate.is_recognized():
                             # Only add recognized, resolved images
                             other_tagobjs.add(candidate)
+                        # Use the candidate cycle if it is set.
+                        # Unless something is really wrong, we won't have
+                        # different cycle numbers for the same image
+                        if candidate.cycle:
+                            tag_cycle = candidate.cycle
                     more_names = sorted(
                         [x.display_name for x in other_tagobjs], reverse=True
                     )
@@ -132,25 +137,35 @@ class RubinRepoMan(RepoMan):
                     alias_tags=self.alias_tags,
                     override_name=display_name,
                     digest=image_hash,
-                    cycle=self.cycle,
+                    override_cycle=tag_cycle,
                 )
-            if t == self.recommended_tag:
-                # The point of the "recommended_tag" is that it is always
-                # pulled and put at the front of the pulled-image list.
-                # We want to do this check after we resolve aliases
-                # so that the tag object has a digest and the accurately-
-                # resolved display name
-                pull_images.insert(
-                    0,  # At the front (not that it matters here)
-                    DockerImage(
-                        image_url=tagobj.image_ref,
-                        image_hash=tagobj.digest,
-                        name=tagobj.display_name,
-                    ),
-                )
-            # If we are restricting by cycle only add the tag objects that
-            #  match the correct cycle.
-            if self.cycle is None or (tagobj.cycle == self.cycle):
+            if self.verify_tagobj_cycle(tagobj):
+                # If we are in a cycle-aware environment, only use the
+                #  recommended or aliased image if the cycle matches.
+                if t == self.recommended_tag:
+                    # The point of the "recommended_tag" is that it is always
+                    # pulled and put at the front of the pulled-image list.
+                    # We want to do this check after we resolve aliases
+                    # so that the tag object has a digest and the accurately-
+                    # resolved display name.
+                    pull_images.insert(
+                        0,  # At the front (not that it matters here)
+                        DockerImage(
+                            image_url=tagobj.image_ref,
+                            image_hash=tagobj.digest,
+                            name=tagobj.display_name,
+                        ),
+                    )
+                elif t in self.alias_tags:
+                    # Alias tags should, I guess, go after recommended but
+                    # before the others?
+                    pull_images.append(
+                        DockerImage(
+                            image_url=tagobj.image_ref,
+                            image_hash=tagobj.digest,
+                            name=tagobj.display_name,
+                        ),
+                    )
                 all_tags.append(tagobj)
 
         taglist = RubinTagList(all_tags)
@@ -171,3 +186,9 @@ class RubinRepoMan(RepoMan):
         )
         logger.info(f"Returning {pull_images}")
         return DesiredImageList(pull_images, all_images)
+
+    def verify_tagobj_cycle(self, tagobj: RubinTag) -> bool:
+        """This is true if either we are not in a cycle-aware environment,
+        or, if we are, the cycle on the tagobj matches that of the
+        environment."""
+        return self.cycle is None or (tagobj.cycle == self.cycle)

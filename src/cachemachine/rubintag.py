@@ -496,7 +496,7 @@ class RubinTag(RubinPartialTag):
         alias_tags: List[str] = [],
         override_name: str = "",
         digest: Optional[str] = None,
-        cycle: Optional[int] = None,
+        override_cycle: Optional[int] = None,
     ) -> "RubinTag":
         """Create a RubinTag object from a tag and a list of alias tags.
         Allow overriding name rather than generating one, and allow an
@@ -504,6 +504,7 @@ class RubinTag(RubinPartialTag):
         partial_tag = RubinPartialTag.parse_tag(tag)
         image_type = partial_tag.image_type
         display_name = partial_tag.display_name
+        cycle = partial_tag.cycle
         # Here's where we glue in the alias knowledge
         if tag in alias_tags:
             logger.debug(f"Tag '{tag}' is an alias tag.")
@@ -516,6 +517,10 @@ class RubinTag(RubinPartialTag):
                 + f"with '{override_name}'"
             )
             display_name = override_name
+        # Override cycle if appropriate
+        if override_cycle:
+            logger.debug(f"Overriding cycle '{cycle}' with '{override_cycle}'")
+            cycle = override_cycle
         return cls(
             tag=tag,
             image_ref=image_ref,
@@ -523,7 +528,7 @@ class RubinTag(RubinPartialTag):
             image_type=image_type,
             display_name=display_name,
             semantic_version=partial_tag.semantic_version,
-            cycle=partial_tag.cycle,
+            cycle=cycle,
         )
 
     def is_recognized(self) -> bool:

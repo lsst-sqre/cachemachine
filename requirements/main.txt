@@ -330,9 +330,9 @@ rsa==4.7.2 \
     --hash=sha256:78f9a9bf4e7be0c5ded4583326e7461e3a3c5aae24073648b4bdfa797d78c9d2 \
     --hash=sha256:9d689e6ca1b3038bc82bf8d23e944b6b6037bc02301a574935b2dd946e0353b9
     # via google-auth
-safir==0.2.0 \
-    --hash=sha256:240c16ccc43c7a1cb0ee7fcbb94de44a9675d9bf5aef7509cb09c1e49e9d386b \
-    --hash=sha256:fb6c27f1defb13428dde17b7b304d7672955a4b77ae4de9a5ab5f08f3e09e3cc
+safir==1.0.0 \
+    --hash=sha256:43df32e3bd076a5a59e5e69d138e3220304881908669ea3ce4da9a22bf0b9df3 \
+    --hash=sha256:6086fc32c4a95a294ef4fc5520e9bf566585d88e638029509040d2d7a2d4bbb8
     # via -r requirements/main.in
 semver==2.13.0 \
     --hash=sha256:ced8b23dceb22134307c1b8abfa523da14198793d9787ac838e70e29e77458d4 \

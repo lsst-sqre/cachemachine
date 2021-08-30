@@ -4,8 +4,10 @@ from typing import Any, Dict, List
 from kubernetes.client import (
     V1ContainerImage,
     V1Node,
+    V1NodeSpec,
     V1NodeStatus,
     V1ObjectMeta,
+    V1Taint,
 )
 
 from cachemachine.types import KubernetesDaemonsetNotFound
@@ -22,23 +24,44 @@ class KubernetesMock:
         self.data = data
         self.daemonsets: Dict[str, Any] = {}
 
-        # Create two nodes in our pretend cluster.  One we will
-        # pull to, and one we won't.  This uses the python kubernetes
-        # objects to look like what the client returns.
+        # Create four nodes in our pretend cluster.  One we will pull to, one
+        # we won't, and two will be configured to pull to but will be tainted
+        # or unschedulable.  This uses the python kubernetes objects to look
+        # like what the client returns.
         n1 = V1Node(
             metadata=V1ObjectMeta(name="n1", labels={"k1": "v1"}),
+            spec=V1NodeSpec(),
             status=V1NodeStatus(
                 images=[V1ContainerImage(names=["<none>@<none>"])]
             ),
         )
         n2 = V1Node(
             metadata=V1ObjectMeta(name="n2", labels={"k2": "v2"}),
+            spec=V1NodeSpec(),
+            status=V1NodeStatus(
+                images=[V1ContainerImage(names=["<none>@<none>"])]
+            ),
+        )
+        n3 = V1Node(
+            metadata=V1ObjectMeta(name="n3", labels={"k1": "v1"}),
+            spec=V1NodeSpec(unschedulable=True),
+            status=V1NodeStatus(
+                images=[V1ContainerImage(names=["<none>@<none>"])]
+            ),
+        )
+        n4 = V1Node(
+            metadata=V1ObjectMeta(name="n4", labels={"k1": "v1"}),
+            spec=V1NodeSpec(
+                taints=[
+                    V1Taint(effect="NoSchedule", key="tainted", value="value")
+                ]
+            ),
             status=V1NodeStatus(
                 images=[V1ContainerImage(names=["<none>@<none>"])]
             ),
         )
 
-        self.nodes = [n1, n2]
+        self.nodes = [n1, n2, n3, n4]
 
     def list_nodes(self) -> List[V1Node]:
         """Return the current status of all nodes."""
@@ -112,6 +135,8 @@ class KubernetesMock:
         hash_url = f"{repository}@{image_hash}"
 
         for n in self.nodes:
+            if n.spec.unschedulable or n.spec.taints:
+                continue
             if labels.matches(n.metadata.labels):
 
                 # Look for the hash, even if it's tagged with a different

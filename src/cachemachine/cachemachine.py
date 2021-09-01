@@ -91,6 +91,11 @@ class CacheMachine:
         common_cache = DockerImageList()
 
         for n in nodes:
+            # Skip nodes that are cordoned or have a taint.  They're both
+            # irrelevant since labs don't spawn there and cannot be affected
+            # by our caching since our DaemonSet won't run there.
+            if n.spec.unschedulable or n.spec.taints:
+                continue
 
             # Do the labels we are looking for match this node?
             if self.labels.matches(n.metadata.labels):

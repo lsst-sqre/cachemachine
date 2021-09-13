@@ -49,6 +49,10 @@ aiohttp-devtools==0.13.1 \
     --hash=sha256:70dbab32e2234296ddc995cacc06acf6b7ee2cf2ac1be62d4e12e0d333e63f00 \
     --hash=sha256:da9490c56671ed3920ceb98fc558065dec573c771ca17d500467b245b63f0f9d
     # via -r requirements/dev.in
+asttokens==2.0.5 \
+    --hash=sha256:0844691e88552595a6f4a4281a9f7f79b8dd45ca4ccea82e5e05b4bbdb76705c \
+    --hash=sha256:9a54c114f02c7a9480d56550932546a3f1fe71d8a02f1bc7ccd0ee3ee35cf4d5
+    # via devtools
 async-timeout==3.0.1 \
     --hash=sha256:0c3c816a028d47f659d6ff5c745cb2acf1f966da1fe5c19c77a70282b25f4c5f \
     --hash=sha256:4291ca197d287d274d0b6cb5d6f8f8f82d434ed288f962539ff18cc9012f9ea3
@@ -137,14 +141,18 @@ coverage[toml]==5.5 \
     --hash=sha256:f0b278ce10936db1a37e6954e15a3730bea96a0997c26d7fee88e6c396c2086d \
     --hash=sha256:f11642dddbb0253cc8853254301b51390ba0081750a8ac03f20ea8103f0c56b6
     # via -r requirements/dev.in
-devtools==0.6.1 \
-    --hash=sha256:7334183972a8d04e81d08b7f62126abca9b6f4de51d825c5fdcb9c88f252601a \
-    --hash=sha256:a054307594d35d28fae8df7629967363e851ae0ac7b2152640a8a401c39d42d7
+devtools==0.7.0 \
+    --hash=sha256:15819ddf5affc8ebc9c631973ae26b9758fe9b66604f6926a872258191ab3fbb \
+    --hash=sha256:41f34f1dccf302ce0a96567c3af0720451e6c9eb89bddc64ac07e1136dd595a0
     # via aiohttp-devtools
 distlib==0.3.2 \
     --hash=sha256:106fef6dc37dd8c0e2c0a60d3fca3e77460a48907f335fa28420463a6f799736 \
     --hash=sha256:23e223426b28491b1ced97dc3bbe183027419dfc7982b4fa2f05d5f3ff10711c
     # via virtualenv
+executing==0.8.1 \
+    --hash=sha256:cfaa61564eff6e7a3afda98ea0ba7c646171d9e325203a159bf29a3c2438c129 \
+    --hash=sha256:f3dd49578371a633bd1ff5ca0af4afad65e6d549a06eb35ef20df198eced58ef
+    # via devtools
 filelock==3.0.12 \
     --hash=sha256:18d82244ee114f543149c66a6e0c14e9c4f8a1044b5cdaadd0f82159d6a6ff59 \
     --hash=sha256:929b7d63ec5b7d6b71b0fa5ac14e030b3f70b75747cef1b10da9b879fef15836
@@ -153,9 +161,9 @@ flake8==3.9.2 \
     --hash=sha256:07528381786f2a6237b061f6e96610a4167b226cb926e2aa2b6b1d78057c576b \
     --hash=sha256:bf8fd333346d844f616e8d47905ef3a3384edae6b4e9beb0c5101e25e3110907
     # via -r requirements/dev.in
-identify==2.2.13 \
-    --hash=sha256:7199679b5be13a6b40e6e19ea473e789b11b4e3b60986499b1f589ffb03c217c \
-    --hash=sha256:7bc6e829392bd017236531963d2d937d66fc27cadc643ac0aba2ce9f26157c79
+identify==2.2.14 \
+    --hash=sha256:113a76a6ba614d2a3dd408b3504446bcfac0370da5995aa6a17fd7c6dffde02d \
+    --hash=sha256:32f465f3c48083f345ad29a9df8419a4ce0674bf4a8c3245191d65c83634bdbf
     # via pre-commit
 idna==3.2 \
     --hash=sha256:14475042e284991034cb48e06f6851428fb14c4dc953acd9be9a5e95c7b6dd7a \
@@ -249,17 +257,17 @@ packaging==21.0 \
     --hash=sha256:7dc96269f53a4ccec5c0670940a4281106dd0bb343f47b7471f779df49c2fbe7 \
     --hash=sha256:c86254f9220d55e31cc94d69bade760f0847da8000def4dfe1c6b872fd14ff14
     # via pytest
-platformdirs==2.2.0 \
-    --hash=sha256:4666d822218db6a262bdfdc9c39d21f23b4cfdb08af331a81e92751daf6c866c \
-    --hash=sha256:632daad3ab546bd8e6af0537d09805cec458dce201bccfe23012df73332e181e
+platformdirs==2.3.0 \
+    --hash=sha256:15b056538719b1c94bdaccb29e5f81879c7f7f0f4a153f46086d155dffcd4f0f \
+    --hash=sha256:8003ac87717ae2c7ee1ea5a84a1a61e87f3fbd16eb5aadba194ea30a9019f648
     # via virtualenv
-pluggy==0.13.1 \
-    --hash=sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0 \
-    --hash=sha256:966c145cd83c96502c3c3868f50408687b38434af77734af1e9ca461a4081d2d
+pluggy==1.0.0 \
+    --hash=sha256:4224373bacce55f955a878bf9cfa763c1e360858e330072059e10bad68531159 \
+    --hash=sha256:74134bbf457f031a36d68416e1509f34bd5ccc019f0bcc952c7b909d06b37bd3
     # via pytest
-pre-commit==2.14.1 \
-    --hash=sha256:7977a3103927932d4823178cbe4719ab55bb336f42a9f3bb2776cff99007a117 \
-    --hash=sha256:a22d12a02da4d8df314187dfe7a61bda6291d57992060522feed30c8cd658b68
+pre-commit==2.15.0 \
+    --hash=sha256:3c25add78dbdfb6a28a651780d5c311ac40dd17f160eb3954a0c59da40a505a7 \
+    --hash=sha256:a4ed01000afcb484d9eb8d504272e642c4c4099bbad3a6b27e519bd6a3e928a6
     # via -r requirements/dev.in
 py==1.10.0 \
     --hash=sha256:21b81bda15b66ef5e1a777a21c4dcd9c20ad3efd0b3f817e7a809035269e1bd3 \
@@ -281,9 +289,9 @@ pyparsing==2.4.7 \
     --hash=sha256:c203ec8783bf771a155b207279b9bccb8dea02d8f0c9e5f8ead507bc3246ecc1 \
     --hash=sha256:ef9d7589ef3c200abe66653d3f1ab1033c3c419ae9b9bdb1240a85b024efc88b
     # via packaging
-pytest==6.2.4 \
-    --hash=sha256:50bcad0a0b9c5a72c8e4e7c9855a3ad496ca6a881a3641b4260605450772c54b \
-    --hash=sha256:91ef2131a9bd6be8f76f1f08eac5c5317221d6ad1e143ae03894b862e8976890
+pytest==6.2.5 \
+    --hash=sha256:131b36680866a76e6781d13f101efb86cf674ebb9762eb70d3082b6f29889e89 \
+    --hash=sha256:7310f8d27bc79ced999e760ca304d69f6ba6c6649c0b60fb0e04a4a77cacc134
     # via
     #   -r requirements/dev.in
     #   pytest-aiohttp
@@ -329,7 +337,9 @@ requests==2.26.0 \
 six==1.16.0 \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
     --hash=sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254
-    # via virtualenv
+    # via
+    #   asttokens
+    #   virtualenv
 toml==0.10.2 \
     --hash=sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b \
     --hash=sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f
@@ -338,10 +348,10 @@ toml==0.10.2 \
     #   mypy
     #   pre-commit
     #   pytest
-typing-extensions==3.10.0.1 \
-    --hash=sha256:045dd532231acfa03628df5e0c66dba64e2cc8fc8b844538d4ad6d5dd6cb82dc \
-    --hash=sha256:83af6730a045fda60f46510f7f1f094776d90321caa4d97d20ef38871bef4bd3 \
-    --hash=sha256:8bbffbd37fbeb9747a0241fdfde5ae99d4531ad1d1a41ccaea62100e15a5814c
+typing-extensions==3.10.0.2 \
+    --hash=sha256:49f75d16ff11f1cd258e1b988ccff82a3ca5570217d7ad8c5f48205dd99a677e \
+    --hash=sha256:d8226d10bc02a29bcc81df19a26e56a9647f8b0a6d4a83924139f4a8b01f17b7 \
+    --hash=sha256:f1d25edafde516b146ecd0613dabcc61409817af4766fbbcfb8d1ad4ec441a34
     # via
     #   aiohttp
     #   mypy

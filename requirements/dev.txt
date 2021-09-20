@@ -79,9 +79,9 @@ chardet==4.0.0 \
     --hash=sha256:0d6f53a15db4120f2b08c94f11e7d93d2c911ee118b6b30a04ec3ee8310179fa \
     --hash=sha256:f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5
     # via aiohttp
-charset-normalizer==2.0.4 \
-    --hash=sha256:0c8911edd15d19223366a194a513099a302055a962bca2cec0f54b8b63175d8b \
-    --hash=sha256:f23667ebe1084be45f6ae0538e4a5a865206544097e4e8bbcacf42cd02a348f3
+charset-normalizer==2.0.6 \
+    --hash=sha256:5d209c0a931f215cee683b6445e2d77677e7e75e159f78def0db09d68fafcaa6 \
+    --hash=sha256:5ec46d183433dcbd0ab716f2d7f29d8dee50505b3fdb40c6b985c7c4f5a3591f
     # via requests
 click==8.0.1 \
     --hash=sha256:8c04c11192119b1ef78ea049e0a6f0463e4c48ef00a30160c704337586f3ad7a \
@@ -161,9 +161,9 @@ flake8==3.9.2 \
     --hash=sha256:07528381786f2a6237b061f6e96610a4167b226cb926e2aa2b6b1d78057c576b \
     --hash=sha256:bf8fd333346d844f616e8d47905ef3a3384edae6b4e9beb0c5101e25e3110907
     # via -r requirements/dev.in
-identify==2.2.14 \
-    --hash=sha256:113a76a6ba614d2a3dd408b3504446bcfac0370da5995aa6a17fd7c6dffde02d \
-    --hash=sha256:32f465f3c48083f345ad29a9df8419a4ce0674bf4a8c3245191d65c83634bdbf
+identify==2.2.15 \
+    --hash=sha256:528a88021749035d5a39fe2ba67c0642b8341aaf71889da0e1ed669a429b87f0 \
+    --hash=sha256:de83a84d774921669774a2000bf87ebba46b4d1c04775f4a5d37deff0cf39f73
     # via pre-commit
 idna==3.2 \
     --hash=sha256:14475042e284991034cb48e06f6851428fb14c4dc953acd9be9a5e95c7b6dd7a \
@@ -359,9 +359,9 @@ urllib3==1.26.6 \
     --hash=sha256:39fb8672126159acb139a7718dd10806104dec1e2f0f6c88aab05d17df10c8d4 \
     --hash=sha256:f57b4c16c62fa2760b7e3d97c35b255512fb6b59a259730f36ba32ce9f8e342f
     # via requests
-virtualenv==20.7.2 \
-    --hash=sha256:9ef4e8ee4710826e98ff3075c9a4739e2cb1040de6a2a8d35db0055840dc96a0 \
-    --hash=sha256:e4670891b3a03eb071748c569a87cceaefbf643c5bac46d996c5a45c34aa0f06
+virtualenv==20.8.0 \
+    --hash=sha256:4da4ac43888e97de9cf4fdd870f48ed864bbfd133d2c46cbdec941fed4a25aef \
+    --hash=sha256:a4b987ec31c3c9996cf1bc865332f967fe4a0512c41b39652d6224f696e69da5
     # via pre-commit
 watchgod==0.7 \
     --hash=sha256:48140d62b0ebe9dd9cf8381337f06351e1f2e70b2203fa9c6eff4e572ca84f29 \

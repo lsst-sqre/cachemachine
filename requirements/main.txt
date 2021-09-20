@@ -155,17 +155,17 @@ chardet==4.0.0 \
     --hash=sha256:0d6f53a15db4120f2b08c94f11e7d93d2c911ee118b6b30a04ec3ee8310179fa \
     --hash=sha256:f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5
     # via aiohttp
-charset-normalizer==2.0.4 \
-    --hash=sha256:0c8911edd15d19223366a194a513099a302055a962bca2cec0f54b8b63175d8b \
-    --hash=sha256:f23667ebe1084be45f6ae0538e4a5a865206544097e4e8bbcacf42cd02a348f3
+charset-normalizer==2.0.6 \
+    --hash=sha256:5d209c0a931f215cee683b6445e2d77677e7e75e159f78def0db09d68fafcaa6 \
+    --hash=sha256:5ec46d183433dcbd0ab716f2d7f29d8dee50505b3fdb40c6b985c7c4f5a3591f
     # via requests
 click==8.0.1 \
     --hash=sha256:8c04c11192119b1ef78ea049e0a6f0463e4c48ef00a30160c704337586f3ad7a \
     --hash=sha256:fba402a4a47334742d782209a7c79bc448911afe1149d07bdabdf480b3e2f4b6
     # via -r requirements/main.in
-google-auth==2.0.2 \
-    --hash=sha256:104475dc4d57bbae49017aea16fffbb763204fa2d6a70f1f3cc79962c1a383a4 \
-    --hash=sha256:cde472372e030e1e0bc64dac00fb53e6c095d7ab641f4281e2c995e85e205d8b
+google-auth==2.1.0 \
+    --hash=sha256:7ae5eda089d393ca01658b550df24913cbbbdd34e9e6dedc1cea747485ae0c04 \
+    --hash=sha256:bde03220ed56e4e147dec92339c90ce95159dce657e2cccd0ac1fe82f6a96284
     # via kubernetes
 idna==3.2 \
     --hash=sha256:14475042e284991034cb48e06f6851428fb14c4dc953acd9be9a5e95c7b6dd7a \

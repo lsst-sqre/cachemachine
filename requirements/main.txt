@@ -520,11 +520,12 @@ six==1.16.0 \
     #   google-auth
     #   kubernetes
     #   python-dateutil
-structlog==21.2.0 \
-    --hash=sha256:63a7111a32e5b615671536bb745692ea02cebfea2b39dcb7d2617eed19437cfe \
-    --hash=sha256:7ac42b565e1295712313f91edbcb64e0840a9037d888c8954f11fa6c43270e99
+structlog==21.3.0 \
+    --hash=sha256:063216becff8e6f6558122a9b00734f7e50bfef309eb730c85a52c74ed861a96 \
+    --hash=sha256:4da2aec0aebf6dee7beb884eb0fda26ed9d6cce5338fcd523e8597d0f1826746
     # via safir
 typing-extensions==4.0.0 \
+    --hash=sha256:2cdf80e4e04866a9b3689a51869016d36db0814d84b8d8a568d22781d45d27ed \
     --hash=sha256:829704698b22e13ec9eaf959122315eabb370b0884400e9818334d8b677023d9
     # via async-timeout
 urllib3==1.26.7 \

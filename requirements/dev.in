@@ -5,11 +5,12 @@
 # After editing, update requirements/dev.txt by running:
 #     make update-deps
 
-pre-commit
+-c main.txt
+
+aiohttp-devtools
 coverage[toml]
-flake8
 mypy
+pre-commit
 pytest
 pytest-aiohttp
-aiohttp-devtools
 requests

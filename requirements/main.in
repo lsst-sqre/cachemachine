@@ -5,13 +5,13 @@
 # After editing, update requirements/main.txt by running:
 #     make update-deps
 
-safir<2
-aiohttp
 aiodns
+aiohttp
 aiojobs
 cchardet
 click
-kubernetes
 jsonschema
+kubernetes
 requests
+safir<2
 semver

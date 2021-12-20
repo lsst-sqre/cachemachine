@@ -293,13 +293,13 @@ idna==3.3 \
     # via
     #   requests
     #   yarl
-jsonschema==4.2.1 \
-    --hash=sha256:2a0f162822a64d95287990481b45d82f096e99721c86534f48201b64ebca6e8c \
-    --hash=sha256:390713469ae64b8a58698bb3cbc3859abe6925b565a973f87323ef21b09a27a8
+jsonschema==4.3.1 \
+    --hash=sha256:0070ca8dd5bf47941d1e9d8bc115a3654b1138cfb8aff44f3e3527276107314f \
+    --hash=sha256:91ffbad994d766041c6003d5f8f475cceb890c30084bd0e64847ccb1c10e48bb
     # via -r requirements/main.in
-kubernetes==20.13.0 \
-    --hash=sha256:7d32ea7f555813a141a0e912e7695d88f7213bb632a860ba79a963b43f7a6b18 \
-    --hash=sha256:ce5e881c13dc56f21a243804f90bc3c507af93c380f505c00e392c823968e4de
+kubernetes==21.7.0 \
+    --hash=sha256:044c20253f8577491a87af8f9edea1f929ed6d62ce306376a6cb8aed24e572c5 \
+    --hash=sha256:c9849afc2eafdce60efa210049ee7a94e7ef6cf3a7afa14a69b3bf0447825977
     # via -r requirements/main.in
 multidict==5.2.0 \
     --hash=sha256:06560fbdcf22c9387100979e65b26fba0816c162b888cb65b845d3def7a54c9b \
@@ -520,9 +520,9 @@ six==1.16.0 \
     #   google-auth
     #   kubernetes
     #   python-dateutil
-structlog==21.4.0 \
-    --hash=sha256:305a66201f9605a2e8a2595271a446f258175901c09c01e4c2c2a8ac5b68edf1 \
-    --hash=sha256:6ed8fadb27cf8362be0e606f5e79ccdd3b1e879aac65f9dc0ac3033fd013a7be
+structlog==21.5.0 \
+    --hash=sha256:68c4c29c003714fe86834f347cb107452847ba52414390a7ee583472bde00fc9 \
+    --hash=sha256:fd7922e195262b337da85c2a91c84be94ccab1f8fd1957bd6986f6904e3761c8
     # via safir
 typing-extensions==4.0.1 \
     --hash=sha256:4ca091dea149f945ec56afb48dae714f21e8692ef22a395223bcd328961b6a0e \

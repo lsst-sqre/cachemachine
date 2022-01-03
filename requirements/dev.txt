@@ -81,9 +81,9 @@ aiohttp==3.8.1 \
     #   -c requirements/main.txt
     #   aiohttp-devtools
     #   pytest-aiohttp
-aiohttp-devtools==0.13.1 \
-    --hash=sha256:70dbab32e2234296ddc995cacc06acf6b7ee2cf2ac1be62d4e12e0d333e63f00 \
-    --hash=sha256:da9490c56671ed3920ceb98fc558065dec573c771ca17d500467b245b63f0f9d
+aiohttp-devtools==1.0.post0 \
+    --hash=sha256:1847ce92e6e8ca1ed5dc603864f4faecdfa40b6b5aeb5193f05cafd28d3ce3e3 \
+    --hash=sha256:f46a87b250a84bf8edca21c8b6991dc2b6145cdf0af8a08b73f5c92d48d85f01
     # via -r requirements/dev.in
 aiosignal==1.2.0 \
     --hash=sha256:26e62109036cd181df6e6ad646f91f0dcfd05fe16d0cb924138ff2ab75d64e3a \
@@ -101,17 +101,13 @@ async-timeout==4.0.2 \
     # via
     #   -c requirements/main.txt
     #   aiohttp
-attrs==21.2.0 \
-    --hash=sha256:149e90d6d8ac20db7a955ad60cf0e6881a3f20d37096140088356da6c716b0b1 \
-    --hash=sha256:ef6aaac3ca6cd92904cdd0d83f629a15f18053ec84e6432106f7a4d04ae4f5fb
+attrs==21.4.0 \
+    --hash=sha256:2d27e3784d7a565d36ab851fe94887c5eccd6a463168875832a1be79c82828b4 \
+    --hash=sha256:626ba8234211db98e869df76230a137c4c40a12d72445c45d5f5b716f076e2fd
     # via
     #   -c requirements/main.txt
     #   aiohttp
     #   pytest
-backports.entry-points-selectable==1.1.1 \
-    --hash=sha256:7fceed9532a7aa2bd888654a7314f864a3c16a4e710b34a58cfc0f08114c663b \
-    --hash=sha256:914b21a479fde881635f7af5adc7f6e38d6b274be32269070c53b698c60d5386
-    # via virtualenv
 certifi==2021.10.8 \
     --hash=sha256:78884e7c1d4b00ce3cea67b44566851c4343c120abd683433ce934a68ea58872 \
     --hash=sha256:d62a0163eb4c2344ac042ab2bdf75399a71a2d8c7d47eac2e2ee91b9d6339569
@@ -277,9 +273,9 @@ frozenlist==1.2.0 \
     #   -c requirements/main.txt
     #   aiohttp
     #   aiosignal
-identify==2.4.0 \
-    --hash=sha256:a33ae873287e81651c7800ca309dc1f84679b763c9c8b30680e16fbfa82f0107 \
-    --hash=sha256:eba31ca80258de6bb51453084bff4a923187cd2193b9c13710f2516ab30732cc
+identify==2.4.1 \
+    --hash=sha256:0192893ff68b03d37fed553e261d4a22f94ea974093aefb33b29df2ff35fed3c \
+    --hash=sha256:64d4885e539f505dd8ffb5e93c142a1db45480452b1594cacd3e91dca9a984e9
     # via pre-commit
 idna==3.3 \
     --hash=sha256:84d9dd047ffa80596e0f246e2eab0b391788b0503584e8945f2368256d2735ff \
@@ -419,9 +415,9 @@ py==1.11.0 \
     --hash=sha256:51c75c4126074b472f746a24399ad32f6053d1b34b68d2fa41e558e6f4a98719 \
     --hash=sha256:607c53218732647dff4acdfcd50cb62615cedf612e72d1724fb1a0cc6405b378
     # via pytest
-pygments==2.10.0 \
-    --hash=sha256:b8e67fe6af78f492b3c4b3e2970c0624cbf08beb1e493b2c99b9fa1b67a20380 \
-    --hash=sha256:f398865f7eb6874156579fdf36bc840a03cab64d1cde9e93d68f46a425ec52c6
+pygments==2.11.1 \
+    --hash=sha256:59b895e326f0fb0d733fd28c6839bd18ad0687ba20efc26d4277fd1d30b971f4 \
+    --hash=sha256:9135c1af61eec0f650cd1ea1ed8ce298e54d56bcd8cc2ef46edd7702c171337c
     # via aiohttp-devtools
 pyparsing==3.0.6 \
     --hash=sha256:04ff808a5b90911829c55c4e26f75fa5ca8a2f5f36aa3a51f68e27033341d3e4 \
@@ -509,9 +505,9 @@ urllib3==1.26.7 \
     # via
     #   -c requirements/main.txt
     #   requests
-virtualenv==20.10.0 \
-    --hash=sha256:4b02e52a624336eece99c96e3ab7111f469c24ba226a53ec474e8e787b365814 \
-    --hash=sha256:576d05b46eace16a9c348085f7d0dc8ef28713a2cabaa1cf0aea41e8f12c9218
+virtualenv==20.13.0 \
+    --hash=sha256:339f16c4a86b44240ba7223d0f93a7887c3ca04b5f9c8129da7958447d079b09 \
+    --hash=sha256:d8458cf8d59d0ea495ad9b34c2599487f8a7772d796f9910858376d1600dd2dd
     # via pre-commit
 watchgod==0.7 \
     --hash=sha256:48140d62b0ebe9dd9cf8381337f06351e1f2e70b2203fa9c6eff4e572ca84f29 \

@@ -8,6 +8,7 @@ import pytest
 from kubernetes import config
 
 import cachemachine.cachemachine
+import cachemachine.rubinrepoman
 
 from .docker_mock import DockerMock
 from .kubernetes_mock import KubernetesMock

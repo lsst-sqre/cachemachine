@@ -129,4 +129,4 @@ async def stop_machine(request: web.Request) -> web.Response:
     name = request.match_info["name"]
     manager = request.config_dict["manager"]
     await manager.release(name)
-    return web.HTTPOk()
+    raise web.HTTPOk()

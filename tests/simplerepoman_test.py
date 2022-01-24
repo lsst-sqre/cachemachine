@@ -7,10 +7,13 @@ from __future__ import annotations
 
 from typing import List
 
+import pytest
+
 from cachemachine.simplerepoman import SimpleRepoMan
 from cachemachine.types import CachedDockerImage
 
 
+@pytest.mark.asyncio
 async def test_simplerepoman() -> None:
     """Test SimpleRepoMan, a simple way to pull an image."""
 

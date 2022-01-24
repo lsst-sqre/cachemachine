@@ -40,6 +40,7 @@ def cycle_docker_mock() -> Generator:
         yield mock.return_value
 
 
+@pytest.mark.asyncio
 async def test_alias_tag_picking(cycle_docker_mock: DockerMock) -> None:
     """Test RubinRepoMan, with a docker mock.
 

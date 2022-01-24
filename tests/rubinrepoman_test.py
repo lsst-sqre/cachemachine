@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import List
 
+import pytest
+
 from cachemachine.rubinrepoman import RubinRepoMan
 from cachemachine.types import CachedDockerImage, DockerImage
 
@@ -66,6 +68,7 @@ for t in expected_desired_cycle_tags:
     )
 
 
+@pytest.mark.asyncio
 async def test_rubinrepoman() -> None:
     """Test RubinRepoMan, including going out to docker
 
@@ -100,6 +103,7 @@ async def test_rubinrepoman() -> None:
     assert di[3].name.startswith("Daily ")
 
 
+@pytest.mark.asyncio
 async def test_rubinrepoman_tag_picking(docker_mock: DockerMock) -> None:
     """Test RubinRepoMan, with a docker mock.
 
@@ -170,6 +174,7 @@ async def test_rubinrepoman_tag_picking(docker_mock: DockerMock) -> None:
         assert dimg.name == expected.name
 
 
+@pytest.mark.asyncio
 async def test_rubinrepoman_cycle(docker_mock: DockerMock) -> None:
     """Test RubinRepoMan, with a docker mock, restricting by cycle.
 

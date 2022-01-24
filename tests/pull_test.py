@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
 import asyncio
 
+import pytest
 import structlog
 
 from cachemachine.app import create_app
@@ -25,6 +26,7 @@ from .kubernetes_mock import KubernetesMock
 logger = structlog.get_logger(__name__)
 
 
+@pytest.mark.asyncio
 async def test_pull(
     aiohttp_client: TestClient,
     docker_mock: DockerMock,
@@ -100,6 +102,7 @@ async def test_pull(
     assert response.status == 200
 
 
+@pytest.mark.asyncio
 async def test_fight_prepull(
     aiohttp_client: TestClient,
     docker_mock: DockerMock,

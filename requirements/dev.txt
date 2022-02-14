@@ -254,9 +254,9 @@ frozenlist==1.3.0 \
     #   -c requirements/main.txt
     #   aiohttp
     #   aiosignal
-identify==2.4.9 \
-    --hash=sha256:bff7c4959d68510bc28b99d664b6a623e36c6eadc933f89a4e0a9ddff9b4fee4 \
-    --hash=sha256:e926ae3b3dc142b6a7a9c65433eb14ccac751b724ee255f7c2ed3b5970d764fb
+identify==2.4.10 \
+    --hash=sha256:7d10baf6ba6f1912a0a49f4c1c2c49fa1718765c3a37d72d13b07779567c5b85 \
+    --hash=sha256:e12b2aea3cf108de73ae055c2260783bde6601de09718f6768cf8e9f6f6322a6
     # via pre-commit
 idna==3.3 \
     --hash=sha256:84d9dd047ffa80596e0f246e2eab0b391788b0503584e8945f2368256d2735ff \

@@ -155,7 +155,7 @@ class DockerClient:
                 if self.url in credstore["auths"]:
                     b64auth = credstore["auths"][self.url]["auth"]
                     basic_auth = base64.b64decode(b64auth).decode()
-                    (self.username, self.password) = basic_auth.split(":")
+                    (self.username, self.password) = basic_auth.split(":", 1)
                     logger.debug(f"Found {self.url}: {self.username}")
         except FileNotFoundError:
             pass

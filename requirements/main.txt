@@ -284,9 +284,9 @@ jsonschema==4.4.0 \
     --hash=sha256:636694eb41b3535ed608fe04129f26542b59ed99808b4f688aa32dcf55317a83 \
     --hash=sha256:77281a1f71684953ee8b3d488371b162419767973789272434bbc3f29d9c8823
     # via -r requirements/main.in
-kubernetes==21.7.0 \
-    --hash=sha256:044c20253f8577491a87af8f9edea1f929ed6d62ce306376a6cb8aed24e572c5 \
-    --hash=sha256:c9849afc2eafdce60efa210049ee7a94e7ef6cf3a7afa14a69b3bf0447825977
+kubernetes==22.6.0 \
+    --hash=sha256:5d329ee9b40e333e32f7bb62339cdce3eac47ab7c50b305ec21c114c49447e20 \
+    --hash=sha256:8578afa0fd4e7e86cfa4eeec204e4bad8a2c109ce52f85f8f3c593e9b0d47960
     # via -r requirements/main.in
 multidict==6.0.2 \
     --hash=sha256:0327292e745a880459ef71be14e709aaea2f783f3537588fb4ed09b6c01bca60 \

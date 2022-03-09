@@ -29,6 +29,12 @@ class RepoManTypeNotFoundError(Exception):
     pass
 
 
+class RepoGarTypeNotFoundError(Exception):
+    """The type of Repo Gar requested does not exist."""
+
+    pass
+
+
 @dataclass
 class CachedDockerImage:
     """Container for docker image that is already pulled."""
@@ -158,6 +164,27 @@ class KubernetesLabels(dict):
 
 
 class RepoMan(ABC):
+    """Abstract class for a strategy pattern to determine images."""
+
+    @abstractmethod
+    async def desired_images(
+        self, common_cache: List[CachedDockerImage]
+    ) -> DesiredImageList:
+        """Determine the list of images to pull.
+
+        Parameters
+        ----------
+        common_cache: The current common image cache on all the nodes.
+
+        Returns
+        -------
+        A DesiredImages object that contains the list of images to
+        pull, as well as other images that could be pulled.
+        """
+        pass
+
+
+class RepoGar(ABC):
     """Abstract class for a strategy pattern to determine images."""
 
     @abstractmethod

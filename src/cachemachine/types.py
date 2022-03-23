@@ -29,12 +29,6 @@ class RepoManTypeNotFoundError(Exception):
     pass
 
 
-class RepoGarTypeNotFoundError(Exception):
-    """The type of Repo Gar requested does not exist."""
-
-    pass
-
-
 @dataclass
 class CachedDockerImage:
     """Container for docker image that is already pulled."""

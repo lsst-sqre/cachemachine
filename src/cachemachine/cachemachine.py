@@ -12,7 +12,7 @@ from cachemachine.types import (
     ImageEntry,
     KubernetesDaemonsetNotFound,
     KubernetesLabels,
-    RepoGar,
+    RepoMan,
 )
 
 logger = structlog.get_logger(__name__)
@@ -27,7 +27,7 @@ class CacheMachine:
         self,
         name: str,
         labels: KubernetesLabels,
-        repomen: Sequence[RepoGar],
+        repomen: Sequence[RepoMan],
     ):
         self.all_images = DockerImageList()
         self.available_images = DockerImageList()

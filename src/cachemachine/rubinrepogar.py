@@ -11,13 +11,13 @@ from cachemachine.types import (
     DesiredImageList,
     DockerImage,
     DockerImageList,
-    RepoGar,
+    RepoMan,
 )
 
 logger = structlog.get_logger(__name__)
 
 
-class RubinRepoGar(RepoGar):
+class RubinRepoGar(RepoMan):
     """This class encapsulates the business logic of picking images based on
     the format of tags created by Rubin Observatory."""
 
@@ -55,9 +55,7 @@ class RubinRepoGar(RepoGar):
         # So is "latest" (DOCKER_DEFAULT_TAG), but it's very possible we don't
         # want to pull "latest".  Add recommended if we have it, but the
         # DOCKER_DEFAULT_TAG only if it's already listed in alias_tags.
-        self.recommended_tag = body[
-            "recommended_tag"
-        ]  # added because of attribute error
+        self.recommended_tag = body["recommended_tag"]
         if self.recommended_tag:
             self.alias_tags.insert(0, self.recommended_tag)
         # Cheap deduplication
@@ -110,9 +108,7 @@ class RubinRepoGar(RepoGar):
                         digest=digest,
                     )
 
-                    if self.verify_tagobj_cycle(
-                        tagobj
-                    ):  # why does this only apply to alias tags?
+                    if self.verify_tagobj_cycle(tagobj):
                         # If we are in a cycle-aware environment, only use the
                         #  recommended or aliased image if the cycle matches.
 

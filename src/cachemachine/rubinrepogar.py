@@ -144,7 +144,6 @@ class RubinRepoGar(RepoMan):
                     tagobj = RubinTag.from_tag(
                         tag=tag,
                         image_ref=f"{image_base}:{tag}",
-                        alias_tags="",
                         override_name="",
                         digest=digest,
                     )

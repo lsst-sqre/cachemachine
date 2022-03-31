@@ -21,6 +21,7 @@ deps =
     -r{toxinidir}/requirements/dev.txt
 commands =
     coverage run -m pytest {posargs}
+passenv = GOOGLE_APPLICATION_CREDENTIALS
 
 [testenv:coverage-report]
 description = Compile coverage from each test run.

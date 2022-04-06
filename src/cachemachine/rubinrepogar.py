@@ -1,6 +1,6 @@
 """Repository Manager for Rubin Observatory images on Artifact Registry."""
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Set
 
 import structlog
 from google.cloud import artifactregistry_v1
@@ -43,7 +43,8 @@ class RubinRepoGar(RepoMan):
         self.client = artifactregistry_v1.ArtifactRegistryClient()
         self.project_id = body["project_id"]
         self.location = body["location"]
-        self.gar_repo = body["gar_repository"]
+        self.gar_repository = body["gar_repository"]
+        self.gar_image = body["gar_image"]
 
         self.num_dailies: int = body["num_dailies"]
         self.num_weeklies: int = body["num_weeklies"]
@@ -68,16 +69,17 @@ class RubinRepoGar(RepoMan):
         pull_images = DockerImageList()
 
         all_tags: List[RubinTag] = []
+        other_tags = []
 
         # Construct parent resource to identify google artifact registry
         parent = (
             f"projects/{self.project_id}/locations/{self.location}/"
-            f"repositories/{self.gar_repo}"
+            f"repositories/{self.gar_repository}"
         )
 
         image_base = (
             f"{self.location}-docker.pkg.dev/"
-            f"{self.project_id}/{self.gar_repo}/sciplat-lab"
+            f"{self.project_id}/{self.gar_repository}/{self.gar_image}"
         )
 
         # Initialize request argument for google artifact registry
@@ -88,24 +90,62 @@ class RubinRepoGar(RepoMan):
         # Make the request
         image_list = self.client.list_docker_images(request=request)
 
+        # Sort the tags lexically and in reverse, which should give the
+        # most recent builds above the older builds.  At this point, all
+        # the dailies, weeklies, releases, and recommended are in here.
+        # tags = sorted(await self.docker_client.list_tags(), reverse=True)
+
         # Handle the response
         for response in image_list:
 
-            for tag in response.tags:
+            # Create list of other tags to use later for updating display name
+            other_tags = response.tags
 
-                # Parse image digest from image URI and @ from image hash
-                # as it does match format from cache
-                digest = response.uri.lstrip(image_base).strip("@")
+            # Parse image digest from image URI and remove @ from image hash
+            digest = response.uri.lstrip(image_base).strip("@")
+
+            for tag in response.tags:
 
                 # Set alias tag if image is alias
                 if tag in self.alias_tags:
 
+                    tag_cycle: Optional[int] = None
+
+                    display_name = RubinTag.prettify_tag(tag)
+
+                    if other_tags:
+                        other_tagobjs: Set[RubinTag] = set()
+                        for other_tag in other_tags:
+                            candidate = RubinTag.from_tag(
+                                tag=other_tag,
+                                image_ref=f"{image_base}:{tag}",
+                                digest=digest,
+                                alias_tags=self.alias_tags,
+                            )
+                            if candidate.is_recognized():
+                                # Only add recognized, resolved images
+                                other_tagobjs.add(candidate)
+                            # Use the candidate cycle if it is set.
+                            # Unless something is really wrong, we won't have
+                            # different cycle numbers for the same image
+                            if candidate.cycle:
+                                tag_cycle = candidate.cycle
+                        # Construct display names with multiple tags
+                        more_names = sorted(
+                            [x.display_name for x in other_tagobjs],
+                            reverse=True,
+                        )
+                        display_name += f" ({', '.join(more_names)})"
+
+                    # Now that we know more about the tagged image, recreate
+                    # the RubinTag object with the additional info.
                     tagobj = RubinTag.from_tag(
                         tag=tag,
                         image_ref=f"{image_base}:{tag}",
                         alias_tags=tag,
-                        override_name="",
+                        override_name=display_name,
                         digest=digest,
+                        override_cycle=tag_cycle,
                     )
 
                     if self.verify_tagobj_cycle(tagobj):
@@ -120,6 +160,7 @@ class RubinRepoGar(RepoMan):
                             #  after we resolve aliases so that the tag
                             #  object has a digest and the accurately-resolved
                             #  display name.
+
                             pull_images.insert(
                                 0,  # At the front (not that it matters here)
                                 DockerImage(
@@ -129,9 +170,7 @@ class RubinRepoGar(RepoMan):
                                 ),
                             )
                         elif tag in self.alias_tags:
-                            # Put ohter alias tags into pull images list.
-                            # Alias tags should, I guess, go after recommended
-                            # but before the others?
+                            # Put other alias tags into pull images list
                             pull_images.append(
                                 DockerImage(
                                     image_url=tagobj.image_ref,
@@ -154,7 +193,9 @@ class RubinRepoGar(RepoMan):
         # than its associated display name.
         taglist = RubinTagList(all_tags)
 
+        # all_images = taglist.sorted_images(img_type=RubinTagType)
         all_images = taglist.to_dockerimagelist(name_is_tag=True)
+
         pull_images.extend(
             taglist.sorted_images(
                 RubinTagType.RELEASE, count=self.num_releases
@@ -172,6 +213,9 @@ class RubinRepoGar(RepoMan):
         )
 
         logger.info(f"Returning {pull_images}")
+
+        # sort images in reverse alphabetical for proper display in image list
+        all_images = sorted(all_images, key=str, reverse=True)
 
         return DesiredImageList(pull_images, all_images)
 

@@ -10,8 +10,10 @@ aiohttp
 aiojobs
 cchardet
 click
+google-cloud
+google-cloud-artifact-registry
 jsonschema
-kubernetes
+kubernetes==22.6.0
 requests
 safir<2
 semver

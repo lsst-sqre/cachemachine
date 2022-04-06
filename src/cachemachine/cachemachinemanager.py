@@ -14,6 +14,7 @@ from aiojobs import create_scheduler
 from aiojobs._job import Job
 
 from cachemachine.cachemachine import CacheMachine
+from cachemachine.rubinrepogar import RubinRepoGar
 from cachemachine.rubinrepoman import RubinRepoMan
 from cachemachine.simplerepoman import SimpleRepoMan
 from cachemachine.types import (
@@ -87,6 +88,8 @@ class CacheMachineManager:
                 repomen.append(SimpleRepoMan(r))
             elif r["type"] == "RubinRepoMan":
                 repomen.append(RubinRepoMan(r))
+            elif r["type"] == "RubinRepoGar":
+                repomen.append(RubinRepoGar(r))
             else:
                 raise RepoManTypeNotFoundError(r["type"])
 

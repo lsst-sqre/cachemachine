@@ -32,6 +32,7 @@ async def test_rubinrepogar() -> None:
         "project_id": "rubin-shared-services-71ec",
         "location": "us-central1",
         "gar_repository": "sciplat",
+        "gar_image": "sciplat-lab",
         "num_releases": 1,
         "num_weeklies": 1,
         "num_dailies": 1,

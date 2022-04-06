@@ -189,9 +189,13 @@ class RubinRepoGar(RepoMan):
 
                 all_tags.append(tagobj)
 
+        # sort images in reverse alphabetical for proper display in image list
+        tags_sorted = sorted(all_tags, key=str, reverse=True)
+
         # Note that for the dropdown, we want to display the tag, rather
         # than its associated display name.
-        taglist = RubinTagList(all_tags)
+
+        taglist = RubinTagList(tags_sorted)
 
         # all_images = taglist.sorted_images(img_type=RubinTagType)
         all_images = taglist.to_dockerimagelist(name_is_tag=True)
@@ -213,9 +217,6 @@ class RubinRepoGar(RepoMan):
         )
 
         logger.info(f"Returning {pull_images}")
-
-        # sort images in reverse alphabetical for proper display in image list
-        all_images = sorted(all_images, key=str, reverse=True)
 
         return DesiredImageList(pull_images, all_images)
 

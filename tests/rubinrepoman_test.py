@@ -23,6 +23,7 @@ expected_names = {
     "r22_0_0_rc1": "Release Candidate r22.0.0-rc1",
     "r21_0_0": "Release r21.0.0",
     "w_2021_22": "Weekly 2021_22",
+    "w_2021_25_c0022.001": "Weekly 2021_25 (SAL Cycle 0022, Build 001)",
     "w_2021_21_c0021.003": "Weekly 2021_21 (SAL Cycle 0021, Build 003)",
     "w_2021_22_c0021.003_20210514": "Weekly 2021_21_20210514 (SAL Cycle 0021, Build 003)",  # noqa: E501
     "w_2021_22_20210514": "Weekly 2021_21_20210514",
@@ -181,6 +182,9 @@ async def test_rubinrepoman_cycle(docker_mock: DockerMock) -> None:
     Note: This doesn't reach out over the network, and uses some
     mocked docker results to test the logic of picking tags out
     of the list.
+
+    Also note: the input data intentionally has a newer cycle build; because
+    it is out-of-cycle, it should NOT show up in the list.
     """
     body = {
         "repo": "lsstsqre/sciplat-lab",

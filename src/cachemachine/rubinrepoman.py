@@ -168,7 +168,10 @@ class RubinRepoMan(RepoMan):
                     )
                 all_tags.append(tagobj)
 
-        taglist = RubinTagList(all_tags)
+        # Now if we have a cycle, we filter the list of tags by cycle,
+        # and discard those that don't match
+        cycle_tags = [x for x in all_tags if self.verify_tagobj_cycle(x)]
+        taglist = RubinTagList(cycle_tags)
 
         # Note that for the dropdown, we want to display the tag, rather
         # than its associated display name.

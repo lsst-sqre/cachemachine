@@ -139,36 +139,40 @@ class RubinRepoMan(RepoMan):
                     digest=image_hash,
                     override_cycle=tag_cycle,
                 )
-            if self.verify_tagobj_cycle(tagobj):
-                # If we are in a cycle-aware environment, only use the
-                #  recommended or aliased image if the cycle matches.
-                if t == self.recommended_tag:
-                    # The point of the "recommended_tag" is that it is always
-                    # pulled and put at the front of the pulled-image list.
-                    # We want to do this check after we resolve aliases
-                    # so that the tag object has a digest and the accurately-
-                    # resolved display name.
-                    pull_images.insert(
-                        0,  # At the front (not that it matters here)
-                        DockerImage(
-                            image_url=tagobj.image_ref,
-                            image_hash=tagobj.digest,
-                            name=tagobj.display_name,
-                        ),
-                    )
-                elif t in self.alias_tags:
-                    # Alias tags should, I guess, go after recommended but
-                    # before the others?
-                    pull_images.append(
-                        DockerImage(
-                            image_url=tagobj.image_ref,
-                            image_hash=tagobj.digest,
-                            name=tagobj.display_name,
-                        ),
-                    )
-                all_tags.append(tagobj)
+            if t == self.recommended_tag:
+                # The point of the "recommended_tag" is that it is always
+                # pulled and put at the front of the pulled-image list.
+                # We want to do this check after we resolve aliases
+                # so that the tag object has a digest and the accurately-
+                # resolved display name.
+                pull_images.insert(
+                    0,  # At the front (not that it matters here)
+                    DockerImage(
+                        image_url=tagobj.image_ref,
+                        image_hash=tagobj.digest,
+                        name=tagobj.display_name,
+                    ),
+                )
+            elif t in self.alias_tags:
+                # Alias tags should, I guess, go after recommended but
+                # before the others?
+                pull_images.append(
+                    DockerImage(
+                        image_url=tagobj.image_ref,
+                        image_hash=tagobj.digest,
+                        name=tagobj.display_name,
+                    ),
+                )
+            all_tags.append(tagobj)
 
-        taglist = RubinTagList(all_tags)
+        # If we have a cycle, entirely discard anything that doesn't
+        # match the cycle.
+        cycle_tags = [x for x in all_tags if self.verify_tagobj_cycle(x)]
+        taglist = RubinTagList(cycle_tags)
+        # From here on down, we either don't have a cycle (and are working
+        # with all tags) or we only have images that have the correct
+        # cycle.  We may have discarded "recommended" or "latest", but that
+        # is OK, because they don't match the cycle.
 
         # Note that for the dropdown, we want to display the tag, rather
         # than its associated display name.

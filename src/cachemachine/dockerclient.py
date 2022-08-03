@@ -105,7 +105,8 @@ class DockerClient:
         if challenge_type == "basic":
             # Basic auth is used by the Nexus Docker Registry.
             if not self.username or not self.password:
-                raise DockerRegistryError("No password for basic auth")
+                msg = f"No password for basic auth for {self.url}"
+                raise DockerRegistryError(msg)
 
             self.headers["Authorization"] = BasicAuth(
                 self.username, password=self.password
@@ -149,8 +150,10 @@ class DockerClient:
         self.password = None
 
         try:
+            logger.debug("Parsing /etc/secrets/.dockerconfigjson")
             with open("/etc/secrets/.dockerconfigjson") as f:
                 credstore = json.loads(f.read())
+                logger.debug(f"Found data: {credstore}")
 
                 if self.url in credstore["auths"]:
                     b64auth = credstore["auths"][self.url]["auth"]

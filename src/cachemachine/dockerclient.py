@@ -53,7 +53,8 @@ class DockerClient:
                 await self._authenticate(r)
                 return await self.list_tags(authenticate=False)
             else:
-                raise DockerRegistryError(f"Unknown error listing tags {r}")
+                msg = f"Unknown error listing tags from <{url}>: {r}"
+                raise DockerRegistryError(msg)
 
     async def get_image_hash(self, tag: str, authenticate: bool = True) -> str:
         """Get the hash of a tag.
@@ -77,7 +78,8 @@ class DockerClient:
                 await self._authenticate(r)
                 return await self.get_image_hash(tag, authenticate=False)
             else:
-                raise DockerRegistryError(f"Unknown error retrieving hash {r}")
+                msg = f"Unknown error retrieving hash from <{url}>: {r}"
+                raise DockerRegistryError(msg)
 
     async def _authenticate(self, response: ClientResponse) -> None:
         """Internal method to authenticate after getting an auth challenge.
@@ -89,13 +91,8 @@ class DockerClient:
         ----------
         response: response that contains an auth challenge.
         """
-        logger.debug(type(response))
         logger.debug(f"Authenticating {response}")
-
-        challenge = response.headers.get(
-            "WWW-Authenticate", response.headers.get("Www-Authenticate")
-        )
-
+        challenge = response.headers.get("WWW-Authenticate")
         if not challenge:
             raise DockerRegistryError("No authentication challenge")
 
@@ -105,18 +102,16 @@ class DockerClient:
         if challenge_type == "basic":
             # Basic auth is used by the Nexus Docker Registry.
             if not self.username or not self.password:
-                raise DockerRegistryError("No password for basic auth")
-
-            self.headers["Authorization"] = BasicAuth(
-                self.username, password=self.password
-            ).encode()
-            logger.debug(f"Auth header is {self.headers}")
-            logger.info("Authenticated with basic auth")
+                msg = f"No password for basic auth for {self.url}"
+                raise DockerRegistryError(msg)
+            auth = BasicAuth(self.username, password=self.password)
+            self.headers["Authorization"] = auth.encode()
+            logger.info(f"Authenticated with basic auth as {self.username}")
         elif challenge_type == "bearer":
             # Bearer is used by Docker's official registry.
+            logger.debug(f"Parsing challenge params {params}")
             parts = {}
             for p in params.split(","):
-                logger.debug(p)
                 (k, v) = p.split("=")
                 parts[k] = v.replace('"', "")
 
@@ -126,6 +121,7 @@ class DockerClient:
             if self.username and self.password:
                 auth = BasicAuth(self.username, password=self.password)
 
+            logger.info(f"Obtaining bearer token for {self.username}")
             async with self.session.get(url, auth=auth, params=parts) as r:
                 if r.status == 200:
                     body = await r.json()
@@ -133,11 +129,11 @@ class DockerClient:
                     self.headers["Authorization"] = f"Bearer {token}"
                     logger.info("Authenticated with bearer token")
                 else:
-                    raise DockerRegistryError(f"Error getting token {r}")
+                    msg = f"Error getting token from <{url}>: {r}"
+                    raise DockerRegistryError(msg)
         else:
-            raise DockerRegistryError(
-                f"Unknown authentication challenge {challenge}"
-            )
+            msg = f"Unknown authentication challenge {challenge}"
+            raise DockerRegistryError(msg)
 
     def _lookup_credentials(self) -> None:
         """Find credentials for the current client.
@@ -149,13 +145,14 @@ class DockerClient:
         self.password = None
 
         try:
+            logger.debug("Parsing /etc/secrets/.dockerconfigjson")
             with open("/etc/secrets/.dockerconfigjson") as f:
                 credstore = json.loads(f.read())
-
                 if self.url in credstore["auths"]:
                     b64auth = credstore["auths"][self.url]["auth"]
                     basic_auth = base64.b64decode(b64auth).decode()
                     (self.username, self.password) = basic_auth.split(":", 1)
-                    logger.debug(f"Found {self.url}: {self.username}")
+                    msg = f"Found creds for <{self.url}>: {self.username}"
+                    logger.debug(msg)
         except FileNotFoundError:
-            pass
+            logger.warning("/etc/secrets/.dockerconfigjson does not exist")

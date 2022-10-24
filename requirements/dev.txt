@@ -106,9 +106,9 @@ aiosignal==1.2.0 \
     # via
     #   -c requirements/main.txt
     #   aiohttp
-anyio==3.6.1 \
-    --hash=sha256:413adf95f93886e442aea925f3ee43baa5a765a64a0f52c6081894f9992fdd0b \
-    --hash=sha256:cb29b9c70620506a9a8f87a309591713446953302d7d995344d0d7c6c0c9a7be
+anyio==3.6.2 \
+    --hash=sha256:25ea0d673ae30af41a0c442f81cf3b38c7e79fdc7b60335a4c14e05eb0947421 \
+    --hash=sha256:fbbe32bd270d2a2ef3ed1c5d45041250284e31fc0a4df4a5a6071842051a51e3
     # via watchgod
 asttokens==2.0.8 \
     --hash=sha256:c61e16246ecfb2cde2958406b4c8ebc043c9e6d73aaa83c941673b35e5d3a76b \
@@ -435,9 +435,9 @@ pytest-aiohttp==1.0.4 \
     --hash=sha256:1d2dc3a304c2be1fd496c0c2fb6b31ab60cd9fc33984f761f951f8ea1eb4ca95 \
     --hash=sha256:39ff3a0d15484c01d1436cbedad575c6eafbf0f57cdf76fb94994c97b5b8c5a4
     # via -r requirements/dev.in
-pytest-asyncio==0.19.0 \
-    --hash=sha256:7a97e37cfe1ed296e2e84941384bdd37c376453912d397ed39293e0916f521fa \
-    --hash=sha256:ac4ebf3b6207259750bc32f4c1d8fcd7e79739edbc67ad0c58dd150b1d072fed
+pytest-asyncio==0.20.1 \
+    --hash=sha256:2c85a835df33fda40fe3973b451e0c194ca11bc2c007eabff90bb3d156fc172b \
+    --hash=sha256:626699de2a747611f3eeb64168b3575f70439b06c3d0206e6ceaeeb956e65519
     # via pytest-aiohttp
 pyyaml==6.0 \
     --hash=sha256:01b45c0191e6d66c470b6cf1b9531a771a83c1c4208272ead47a3ae4f2f603bf \

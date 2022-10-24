@@ -106,7 +106,7 @@ class CacheMachineManager:
         """Stop managing the cachemachine of this name."""
         if name in self._jobs:
             j = self._jobs[name]
-            j.close(timeout=0)
+            await j.close(timeout=0)
             del self._jobs[name]
 
         if name in self._machines:

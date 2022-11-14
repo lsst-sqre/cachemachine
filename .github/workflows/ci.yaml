@@ -42,7 +42,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: GCP login
-        uses: google-github-actions/setup-gcloud@v0
+        uses: google-github-actions/setup-gcloud@v1
         with:
           service_account_key: ${{ secrets.GCP_GAR_SA }}
           project_id: ${{ secrets.GCP_GAR_PROJECT_ID }}

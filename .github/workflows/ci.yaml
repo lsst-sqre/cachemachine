@@ -41,12 +41,17 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: GCP login
-        uses: google-github-actions/setup-gcloud@v0
+      - name: GCP auth
+        uses: google-github-actions/auth@v1
         with:
-          service_account_key: ${{ secrets.GCP_GAR_SA }}
+          credentials_json: ${{ secrets.GCP_GAR_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: GCP login
+        uses: google-github-actions/setup-gcloud@v1
+        with:
           project_id: ${{ secrets.GCP_GAR_PROJECT_ID }}
-          export_default_credentials: true
 
       - name: Run tox
         uses: lsst-sqre/run-tox@v1

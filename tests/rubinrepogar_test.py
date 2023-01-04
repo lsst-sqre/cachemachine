@@ -20,7 +20,6 @@ repo = (
 
 @pytest.mark.asyncio
 async def test_rubinrepogar() -> None:
-
     """Test RubinRepoMan, including going out to google artifact registry
     Note: This test goes over the network, and will make
     sure the business logic is still working with what the

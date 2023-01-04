@@ -138,7 +138,6 @@ class KubernetesMock:
             if n.spec.unschedulable or n.spec.taints:
                 continue
             if labels.matches(n.metadata.labels):
-
                 # Look for the hash, even if it's tagged with a different
                 # repository.
                 already_pulled = False

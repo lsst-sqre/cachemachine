@@ -65,7 +65,6 @@ class RubinRepoGar(RepoMan):
     async def desired_images(
         self, common_cache: List[CachedDockerImage]
     ) -> DesiredImageList:
-
         pull_images = DockerImageList()
 
         all_tags: List[RubinTag] = []
@@ -97,7 +96,6 @@ class RubinRepoGar(RepoMan):
 
         # Handle the response
         for response in image_list:
-
             # Create list of other tags to use later for updating display name
             other_tags = response.tags
 
@@ -105,10 +103,8 @@ class RubinRepoGar(RepoMan):
             digest = response.uri.lstrip(image_base).strip("@")
 
             for tag in response.tags:
-
                 # Set alias tag if image is alias
                 if tag in self.alias_tags:
-
                     tag_cycle: Optional[int] = None
 
                     display_name = RubinTag.prettify_tag(tag)

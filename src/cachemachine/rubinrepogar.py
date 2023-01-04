@@ -65,11 +65,10 @@ class RubinRepoGar(RepoMan):
     async def desired_images(
         self, common_cache: List[CachedDockerImage]
     ) -> DesiredImageList:
-
         pull_images = DockerImageList()
 
         all_tags: List[RubinTag] = []
-        other_tags = []
+        other_tags: List[str] = []
 
         # Construct parent resource to identify google artifact registry
         parent = (
@@ -97,18 +96,15 @@ class RubinRepoGar(RepoMan):
 
         # Handle the response
         for response in image_list:
-
             # Create list of other tags to use later for updating display name
-            other_tags = response.tags
+            other_tags = list(response.tags)
 
             # Parse image digest from image URI and remove @ from image hash
             digest = response.uri.lstrip(image_base).strip("@")
 
             for tag in response.tags:
-
                 # Set alias tag if image is alias
                 if tag in self.alias_tags:
-
                     tag_cycle: Optional[int] = None
 
                     display_name = RubinTag.prettify_tag(tag)
@@ -142,7 +138,7 @@ class RubinRepoGar(RepoMan):
                     tagobj = RubinTag.from_tag(
                         tag=tag,
                         image_ref=f"{image_base}:{tag}",
-                        alias_tags=tag,
+                        alias_tags=[tag],
                         override_name=display_name,
                         digest=digest,
                         override_cycle=tag_cycle,

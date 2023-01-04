@@ -251,7 +251,7 @@ class RubinPartialTag:
     ) -> "RubinPartialTag":
         if not tag:
             tag = DOCKER_DEFAULT_TAG  # This is a Docker convention
-        for (tagtype, regexp) in TAGTYPE_REGEXPS:
+        for tagtype, regexp in TAGTYPE_REGEXPS:
             match = re.compile(regexp).match(tag)
             if not match:
                 continue

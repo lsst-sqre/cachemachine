@@ -328,9 +328,9 @@ google-cloud==0.34.0 \
     --hash=sha256:01430187cf56df10a9ba775dd547393185d4b40741db0ea5889301f8e7a9d5d3 \
     --hash=sha256:fb1ab7b0548fe44b3d538041f0a374505b7f990d448a935ea36649c5ccab5acf
     # via -r requirements/main.in
-google-cloud-artifact-registry==1.6.0 \
-    --hash=sha256:21490deb8b51a778703ba395928f6967f0fb495d6c1c0425a87cea7f0fc4807d \
-    --hash=sha256:589b30a239af9b0a6bae91b1db265a322ae87db0979a2694a21ee0c7fe680d64
+google-cloud-artifact-registry==1.6.1 \
+    --hash=sha256:609a24fd4a20e2fa527e513fc425bb0ebacc1877efc0ec455634a5a5a5e32f7f \
+    --hash=sha256:60eeaca157f2a2b73cab6d6378cef94fa1756f8410308a81b40b5a27f9f2d25e
     # via -r requirements/main.in
 googleapis-common-protos[grpc]==1.58.0 \
     --hash=sha256:c727251ec025947d545184ba17e3578840fc3a24a0516a020479edab660457df \
@@ -704,9 +704,9 @@ urllib3==1.26.14 \
     # via
     #   kubernetes
     #   requests
-websocket-client==1.4.2 \
-    --hash=sha256:d6b06432f184438d99ac1f456eaf22fe1ade524c3dd16e661142dc54e9cba574 \
-    --hash=sha256:d6e8f90ca8e2dd4e8027c4561adeb9456b54044312dba655e7cae652ceb9ae59
+websocket-client==1.5.0 \
+    --hash=sha256:561ca949e5bbb5d33409a37235db55c279235c78ee407802f1d2314fff8a8536 \
+    --hash=sha256:fb5d81b95d350f3a54838ebcb4c68a5353bbd1412ae8f068b1e5280faeb13074
     # via kubernetes
 yarl==1.8.2 \
     --hash=sha256:009a028127e0a1755c38b03244c0bea9d5565630db9c4cf9572496e947137a87 \

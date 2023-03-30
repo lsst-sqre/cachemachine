@@ -8,7 +8,6 @@
 aiodns
 aiohttp
 aiojobs
-cchardet
 click
 google-cloud
 google-cloud-artifact-registry

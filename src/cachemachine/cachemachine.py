@@ -130,7 +130,7 @@ class CacheMachine:
                             (repository, image_hash) = url.split("@")
                             entries[repository].image_hash = image_hash
                         else:
-                            (repository, new_tag) = url.split(":")
+                            (repository, new_tag) = url.rsplit(":", 1)
                             if new_tag not in entries[repository].tags:
                                 entries[repository].tags.append(new_tag)
 
